@@ -98,6 +98,11 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleSend();
+            }
+          }}
           placeholder="Ask something..."
           className="flex-1 border rounded px-3 py-2"
         />

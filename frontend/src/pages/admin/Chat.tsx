@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getSocket } from "@/lib/socket";
 import { useSocket } from "@/hooks/useSocket";
@@ -20,6 +20,7 @@ export default function AdminChat() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useSocket();
 
@@ -67,10 +68,11 @@ export default function AdminChat() {
     };
   }, [loadChat, loadChats, selectedChatId]);
 
-  const sortedMessages = useMemo(
-    () => selectedChat?.messages || [],
-    [selectedChat],
-  );
+  const sortedMessages = useMemo(() => selectedChat?.messages || [], [selectedChat]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [sortedMessages]);
 
   const handleSend = async () => {
     if (!selectedChat || !message.trim()) return;
@@ -120,7 +122,9 @@ export default function AdminChat() {
                 : "border bg-background"
           }`}
         >
-          <div className="mb-1 text-xs opacity-70">{isAdmin ? "Admin" : isBot ? "Bot" : "User"}</div>
+          <div className="mb-1 text-xs opacity-70">
+            {isAdmin ? "Admin" : isBot ? "Bot" : "User"}
+          </div>
           <div className="whitespace-pre-wrap">{msg.message}</div>
         </div>
       </div>
@@ -177,6 +181,7 @@ export default function AdminChat() {
 
               <div className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
                 {sortedMessages.map(renderMessage)}
+                <div ref={bottomRef} />
               </div>
 
               <div className="flex gap-2 border-t p-4">

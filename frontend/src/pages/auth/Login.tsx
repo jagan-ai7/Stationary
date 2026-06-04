@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { loginSchema } from "@/utils/validation";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { login } from "@/features/auth/authSlice";
+import PasswordInput from "@/components/common/PasswordInput";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -54,10 +55,9 @@ export default function LoginPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   value={values.password}
                   onChange={handleChange}
                   onBlur={handleBlur}

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import PasswordInput from "@/components/common/PasswordInput";
 import { signupSchema } from "@/utils/validation";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { signup } from "@/features/auth/authSlice";
@@ -38,8 +39,7 @@ export default function SignupPage() {
           }}
           validationSchema={signupSchema}
           onSubmit={async (values) => {
-            const { confirmPassword, ...payload } = values;
-            const res = await dispatch(signup(payload));
+            const res = await dispatch(signup(values));
             if (signup.fulfilled.match(res)) {
               toast.success("Account created");
               nav("/", { replace: true });
@@ -50,14 +50,24 @@ export default function SignupPage() {
             const field = (name: keyof typeof values, label: string, type = "text") => (
               <div className="space-y-1.5">
                 <Label htmlFor={name}>{label}</Label>
-                <Input
-                  id={name}
-                  name={name}
-                  type={type}
-                  value={values[name]}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                />
+                {type === "password" ? (
+                  <PasswordInput
+                    id={name}
+                    name={name}
+                    value={values[name]}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                ) : (
+                  <Input
+                    id={name}
+                    name={name}
+                    type={type}
+                    value={values[name]}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                )}
                 {touched[name] && errors[name] && (
                   <p className="text-xs text-destructive">{errors[name] as string}</p>
                 )}

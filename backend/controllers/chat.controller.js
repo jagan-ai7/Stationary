@@ -206,7 +206,7 @@ export const sendAdminMessage = async (req, res, next) => {
     try {
       const io = getIO();
       io.to(`user_${chat.userId}`).emit("admin_reply", payload);
-      io.to("admins").emit("admin_chat_updated", {
+      io.to("admin").emit("admin_chat_updated", {
         chatId: chat.id,
         userId: chat.userId,
         latestMessage: payload,
