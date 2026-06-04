@@ -1,0 +1,76 @@
+backend/
+├── src/
+│
+│   ├── config/                # configs
+│   │   ├── db.js
+│   │   ├── env.js
+│   │
+│   ├── modules/               # 🔥 feature-based backend
+│   │
+│   │   ├── auth/
+│   │   │   ├── auth.controller.js
+│   │   │   ├── auth.service.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── auth.validation.js
+│   │
+│   │   ├── user/
+│   │   │   ├── user.model.js
+│   │   │   ├── user.service.js
+│   │
+│   │   ├── product/
+│   │   │   ├── product.model.js
+│   │   │   ├── product.controller.js
+│   │   │   ├── product.service.js
+│   │   │   ├── product.routes.js
+│   │
+│   │   ├── cart/
+│   │   │   ├── cart.model.js
+│   │   │   ├── cart.controller.js
+│   │   │   ├── cart.service.js
+│   │   │   ├── cart.routes.js
+│   │
+│   │   ├── order/
+│   │   │   ├── order.model.js
+│   │   │   ├── order.controller.js
+│   │   │   ├── order.service.js
+│   │   │   ├── order.routes.js
+│   │
+│   │   ├── notification/
+│   │   │   ├── notification.model.js
+│   │   │   ├── notification.service.js
+│   │   │   ├── notification.controller.js
+│   │   │   ├── notification.routes.js
+│   │
+│   │   ├── admin/
+│   │   │   ├── admin.controller.js
+│   │   │   ├── admin.service.js
+│   │   │   ├── admin.routes.js
+│   │
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── admin.middleware.js
+│   │   ├── error.middleware.js
+│   │
+│   ├── utils/
+│   │   ├── jwt.js
+│   │   ├── hash.js
+│   │   ├── ApiError.js
+│   │
+│   ├── app.js
+│   └── server.js
+│
+├── .env
+├── package.json
+
+
+
+User
+ ├── Cart
+ │     └── CartItems
+ │            └── Product
+ │
+ ├── Orders
+ │     └── OrderItems
+ │            └── Product
+ │
+ └── Notifications

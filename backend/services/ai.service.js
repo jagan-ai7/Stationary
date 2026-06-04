@@ -1,0 +1,71 @@
+import OpenAI from "openai";
+import db from "../models/index.js";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const { ChatMessage } = db;
+
+/**
+ * 🧠 Build AI messages with context
+ */
+const buildMessages = async (chatId, userMessage) => {
+  // Get last 10 messages for context
+  const history = await ChatMessage.findAll({
+    where: { chatId },
+    order: [["createdAt", "ASC"]],
+    limit: 10,
+  });
+
+  const formattedHistory = history.map((msg) => ({
+    role: msg.sender === "user" ? "user" : "assistant",
+    content: msg.message,
+  }));
+
+  return [
+    {
+      role: "system",
+      content: `
+You are a smart ecommerce assistant like Amazon.
+
+Rules:
+- Be short and clear
+- Help with orders, products, payments
+- Suggest products when relevant
+- If unsure, politely say you don’t know
+      `,
+    },
+    ...formattedHistory,
+    {
+      role: "user",
+      content: userMessage,
+    },
+  ];
+};
+
+/**
+ * 🤖 Generate AI response
+ */
+export const getAIResponse = async ({ chatId, message }) => {
+  try {
+    const messages = await buildMessages(chatId, message);
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.7,
+    });
+
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error("AI Error:", {
+      status: error.status,
+      code: error.code,
+      type: error.type,
+      message: error.message,
+    });
+
+    return "Sorry, I'm having trouble right now. Please try again.";
+  }
+};
