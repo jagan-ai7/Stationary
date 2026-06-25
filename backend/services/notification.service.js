@@ -5,9 +5,9 @@ import AppError from "../utils/AppError.js";
 const { Notification, User } = db;
 
 // ✅ CREATE
-export const createNotificationService = async (data) => {
+export const createNotificationService = async (userId, data) => {
   try {
-    const { userId, audience, kind, title, message } = data;
+    const { audience, kind, title, message } = data;
 
     if (!userId && !audience) {
       throw new AppError("userId or audience is required", 400);
@@ -33,27 +33,20 @@ export const createNotificationService = async (data) => {
 };
 
 // ✅ GET ALL (with optional user info)
-export const getAllNotificationsService = async (userId, role, audience) => {
+export const getAllNotificationsService = async (userId, role) => {
   try {
-    const where = {
-      [Op.or]: [
-        { userId }, // personal
-        { audience: role }, // broadcast
-      ],
-    };
-
-    // optional filter (frontend sends this sometimes)
-    if (audience) {
-      where.audience = audience;
-    }
-
     const notifications = await Notification.findAll({
-      where,
+      where: {
+        [Op.or]: [
+          { userId }, // personal notifications
+          { audience: role }, // broadcast to role
+        ],
+      },
       include: [
         {
           model: User,
           attributes: ["id", "firstName", "lastName", "email"],
-          required: false, // IMPORTANT (because userId can be null)
+          required: false,
         },
       ],
       order: [["createdAt", "DESC"]],

@@ -34,71 +34,39 @@ const initialState: NotificationState = {
   error: null,
 };
 
-const now = () => new Date().toISOString();
-const createNotificationId = () => Date.now() + Math.floor(Math.random() * 1000);
-
 // ✅ Thunks
 export const fetchNotifications = createAsyncThunk<
   Notification[],
-  NotificationAudience | undefined,
-  { rejectValue: string }
->("notifications/fetch", async (audience, { rejectWithValue }) => {
-  try {
-    return await notificationService.getAll(audience);
-  } catch (error: any) {
-    return rejectWithValue(error.message);
-  }
+  NotificationAudience | undefined
+>("notifications/fetch", async (audience) => {
+  return await notificationService.getAll(audience);
 });
 
 export const pushNotificationAsync = createAsyncThunk<
   Notification,
-  Omit<Notification, "id" | "createdAt" | "read">,
-  { rejectValue: string }
->("notifications/pushAsync", async (payload, { rejectWithValue }) => {
-  try {
-    return await notificationService.create(payload);
-  } catch (error: any) {
-    return rejectWithValue(error.message);
-  }
+  Omit<Notification, "id" | "createdAt" | "read">
+>("notifications/pushAsync", async (payload) => {
+  return await notificationService.create(payload);
 });
 
-export const markReadAsync = createAsyncThunk<number, number, { rejectValue: string }>(
+export const markReadAsync = createAsyncThunk<number, number>(
   "notifications/markReadAsync",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await notificationService.markRead(id);
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
+  async (id) => {
+    return await notificationService.markRead(id);
   },
 );
 
-export const markAllReadAsync = createAsyncThunk<
-  NotificationAudience,
-  NotificationAudience,
-  { rejectValue: string }
->("notifications/markAllReadAsync", async (audience, { rejectWithValue }) => {
-  try {
+export const markAllReadAsync = createAsyncThunk<NotificationAudience, NotificationAudience>(
+  "notifications/markAllReadAsync",
+  async (audience) => {
     return await notificationService.markAllRead(audience);
-  } catch (error: any) {
-    return rejectWithValue(error.message);
-  }
-});
+  },
+);
 
 const slice = createSlice({
   name: "notifications",
   initialState,
   reducers: {
-    // local push (optimistic)
-    push(state, action: PayloadAction<Omit<Notification, "id" | "createdAt" | "read">>) {
-      state.items.unshift({
-        ...action.payload,
-        id: createNotificationId(),
-        createdAt: now(),
-        read: false,
-      });
-    },
-
     markRead(state, action: PayloadAction<number>) {
       const n = state.items.find((x) => x.id === action.payload);
       if (n) n.read = true;
@@ -124,7 +92,7 @@ const slice = createSlice({
       })
       .addCase(fetchNotifications.rejected, (s, a) => {
         s.loading = false;
-        s.error = a.payload || "Failed to fetch";
+        s.error = a.error.message || "Failed to fetch";
       })
 
       // 🔹 CREATE
@@ -151,5 +119,5 @@ const slice = createSlice({
   },
 });
 
-export const { push, markRead, markAllRead } = slice.actions;
+export const { markRead, markAllRead } = slice.actions;
 export default slice.reducer;

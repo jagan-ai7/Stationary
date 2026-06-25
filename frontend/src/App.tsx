@@ -22,7 +22,7 @@ const AdminProducts = lazy(() => import("@/pages/admin/Products"));
 const AdminOrders = lazy(() => import("@/pages/admin/Orders"));
 const AdminUsers = lazy(() => import("@/pages/admin/Users"));
 const AdminAnalytics = lazy(() => import("@/pages/admin/Analytics"));
-const AdminChat = lazy(() => import("@/pages/admin/Chat"));
+// const AdminChat = lazy(() => import("@/pages/admin/Chat"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const ChatPage = lazy(() => import("@/pages/user/chat"));
 
@@ -81,7 +81,7 @@ export default function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="chat" element={<AdminChat />} />
+            {/* <Route path="chat" element={<AdminChat />} /> */}
           </Route>
         </Route>
 

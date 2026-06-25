@@ -73,10 +73,10 @@ export const getAllOrderService = async () => {
 
     return orders.map(formatOrder);
   } catch (err) {
-    throw new AppError(
-      err.message || "Failed to fetch orders",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to fetch orders", 500);
   }
 };
 
@@ -153,10 +153,10 @@ export const createOrderService = async (userId, data) => {
     return formatOrder(fullOrder);
   } catch (err) {
     await t.rollback();
-    throw new AppError(
-      err.message || "Failed to create order",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to create order", 500);
   }
 };
 
@@ -201,9 +201,9 @@ export const updateOrderStatusService = async (id, newStatus) => {
     };
   } catch (err) {
     await t.rollback();
-    throw new AppError(
-      err.message || "Failed to update order status",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to update order status", 500);
   }
 };

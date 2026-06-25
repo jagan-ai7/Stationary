@@ -1,0 +1,130 @@
+import { useEffect, useState, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import {
+  addUserMessage,
+  addIncomingMessage,
+  fetchChatHistory,
+  sendMessage,
+} from "@/features/chat/chatSlice";
+import { getSocket } from "@/lib/socket";
+import { useSocket } from "@/hooks/useSocket";
+
+export default function ChatPage() {
+  const dispatch = useAppDispatch();
+
+  // ✅ ALWAYS SAFE
+  const messages = useAppSelector((s) => s.chat.messages ?? []);
+  const { user } = useAppSelector((s) => s.auth);
+
+  const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // 🔥 Initialize socket globally
+  useSocket();
+
+  /* ================= LOAD CHAT HISTORY ================= */
+  useEffect(() => {
+    dispatch(fetchChatHistory());
+  }, [dispatch]);
+
+  /* ================= SOCKET LISTENERS ================= */
+  useEffect(() => {
+    const socket = getSocket();
+
+    // ✅ Bot reply (AI)
+    socket.on("reply", (data) => {
+      dispatch(
+        addIncomingMessage({
+          sender: "bot",
+          message: data.message,
+        }),
+      );
+    });
+
+    // ✅ Admin reply
+    socket.on("admin_reply", (data) => {
+      dispatch(
+        addIncomingMessage({
+          sender: "admin",
+          message: data.message,
+        }),
+      );
+    });
+
+    return () => {
+      socket.off("reply");
+      socket.off("admin_reply");
+    };
+  }, [dispatch]);
+
+  /* ================= AUTO SCROLL ================= */
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  /* ================= SEND MESSAGE ================= */
+  const handleSend = () => {
+    if (!input.trim()) return;
+
+    // ✅ Optimistic UI
+    dispatch(addUserMessage(input));
+
+    // ✅ API call (main source of truth)
+    dispatch(sendMessage(input));
+
+    // ✅ Optional: socket emit (for admin real-time)
+    const socket = getSocket();
+    if (user?.id) {
+      socket.emit("message", {
+        userId: user.id,
+        message: input,
+      });
+    }
+
+    setInput("");
+  };
+
+  return (
+    <div className="flex flex-col max-h-screen">
+      {/* Header */}
+      <div className="p-4 border-b font-semibold">Live Support Chat</div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 px-12 bg-gray-50">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`px-4 py-2 rounded-lg max-w-xs whitespace-pre-wrap ${
+                msg.sender === "user" ? "bg-blue-500 text-white" : "bg-white border"
+              }`}
+            >
+              {msg.message}
+            </div>
+          </div>
+        ))}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="p-3 border-t flex gap-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") handleSend();
+          }}
+          placeholder="Ask something..."
+          className="flex-1 border rounded px-3 py-2"
+        />
+
+        <button onClick={handleSend} className="bg-blue-500 text-white px-4 rounded">
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}

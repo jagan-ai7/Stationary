@@ -1,0 +1,63 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import db from "../models/index.js";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const { ChatMessage } = db;
+
+/**
+ * 🧠 Build AI messages with context
+ */
+const buildMessages = async (chatId, userMessage) => {
+  // Get last 10 messages
+  const history = await ChatMessage.findAll({
+    where: { chatId },
+    order: [["createdAt", "ASC"]],
+    limit: 10,
+  });
+
+  const formattedHistory = history.map((msg) => {
+    return `${msg.sender === "user" ? "User" : "Assistant"}: ${msg.message}`;
+  });
+
+  return `
+You are a smart ecommerce assistant like Amazon.
+
+Rules:
+- Be short and clear
+- Help with orders, products, payments
+- Suggest products when relevant
+- If unsure, politely say you don’t know
+
+Conversation:
+${formattedHistory.join("\n")}
+
+User: ${userMessage}
+Assistant:
+`;
+};
+
+/**
+ * 🤖 Generate AI response (Gemini)
+ */
+export const getAIResponse = async ({ chatId, message }) => {
+  try {
+    const prompt = await buildMessages(chatId, message);
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash", // fast + free tier friendly
+    });
+
+    const result = await model.generateContent(prompt);
+
+    const response = result.response.text();
+
+    return response;
+  } catch (error) {
+    console.error("Gemini AI Error:", {
+      message: error.message,
+    });
+
+    return "Sorry, I'm having trouble right now. Please try again.";
+  }
+};

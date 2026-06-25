@@ -63,45 +63,31 @@ export const initSocket = (server) => {
       try {
         const userId = socket.user.id;
 
-        // 1️⃣ Find or create chat
-        let chat = await Chat.findOne({ where: { userId } });
+        // ❌ DO NOT SAVE ANYTHING HERE
 
-        if (!chat) {
-          chat = await Chat.create({ userId });
-        }
-
-        // 2️⃣ Save user message
-        const userMessage = await ChatMessage.create({
-          chatId: chat.id,
-          sender: "user",
-          message,
-        });
-
+        // Notify admins
         io.to("admins").emit("admin_chat_updated", {
-          chatId: chat.id,
           userId,
-          latestMessage: userMessage,
+          latestMessage: {
+            sender: "user",
+            message,
+          },
         });
 
-        // 3️⃣ Get AI reply
-        const reply = await processMessage(userId, message, chat.id);
+        // Optional: trigger AI (but don't save)
+        const reply = await processMessage(userId, message);
 
-        // 4️⃣ Save bot reply
-        const botMessage = await ChatMessage.create({
-          chatId: chat.id,
-          sender: "bot",
-          message: reply,
-        });
-
-        // 5️⃣ Emit reply
+        // Send reply to user
         io.to(`user_${userId}`).emit("reply", {
           message: reply,
         });
 
         io.to("admins").emit("admin_chat_updated", {
-          chatId: chat.id,
           userId,
-          latestMessage: botMessage,
+          latestMessage: {
+            sender: "bot",
+            message: reply,
+          },
         });
       } catch (err) {
         console.error(err);

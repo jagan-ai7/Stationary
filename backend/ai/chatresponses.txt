@@ -1,0 +1,284 @@
+"show orders"
+
+{
+    "success": true,
+    "reply": "[\n  {\n    \"id\": 23,\n    \"userId\": 4,\n    \"totalAmount\": 8,\n    \"status\": \"pending\",\n    \"createdAt\": \"2026-06-23T04:56:35.000Z\",\n    \"updatedAt\": \"2026-06-23T04:56:35.000Z\",\n    \"OrderItems\": [\n      {\n        \"id\": 35,\n        \"orderId\": 23,\n        \"productId\": 2,\n        \"quantity\": 1,\n        \"price\": \"8.00\",\n        \"createdAt\": \"2026-06-23T04:56:35.000Z\",\n        \"updatedAt\": \"2026-06-23T04:56:35.000Z\",\n        \"Product\": {\n          \"id\": 2,\n          \"name\": \"Registers\",\n          \"category\": \"NoteBook\",\n          \"description\": \"Notebooks\",\n          \"price\": \"8.00\",\n          \"stock\": 6,\n          \"image\": \"/uploads/products/1779956849044-884768461.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:29.000Z\",\n          \"updatedAt\": \"2026-06-23T04:56:35.000Z\"\n        }\n      }\n    ]\n  },\n  {\n    \"id\": 22,\n    \"userId\": 4,\n    \"totalAmount\": 4,\n    \"status\": \"pending\",\n    \"createdAt\": \"2026-06-23T04:40:16.000Z\",\n    \"updatedAt\": \"2026-06-23T04:40:16.000Z\",\n    \"OrderItems\": [\n      {\n        \"id\": 34,\n        \"orderId\": 22,\n        \"productId\": 3,\n        \"quantity\": 1,\n        \"price\": \"4.00\",\n        \"createdAt\": \"2026-06-23T04:40:16.000Z\",\n        \"updatedAt\": \"2026-06-23T04:40:16.000Z\",\n        \"Product\": {\n          \"id\": 3,\n          \"name\": \"Color Pencils\",\n          \"category\": \"Pencils\",\n          \"description\": \"Color Pencils\",\n          \"price\": \"4.00\",\n          \"stock\": 1,\n          \"image\": \"/uploads/products/1779956877204-739906086.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:57.000Z\",\n          \"updatedAt\": \"2026-06-23T04:40:16.000Z\"\n        }\n      }\n    ]\n  },\n  {\n    \"id\": 21,\n    \"userId\": 4,\n    \"totalAmount\": 23,\n    \"status\": \"pending\",\n    \"createdAt\": \"2026-06-23T04:34:25.000Z\",\n    \"updatedAt\": \"2026-06-23T04:34:25.000Z\",\n    \"OrderItems\": [\n      {\n        \"id\": 31,\n        \"orderId\": 21,\n        \"productId\": 1,\n        \"quantity\": 1,\n        \"price\": \"3.00\",\n        \"createdAt\": \"2026-06-23T04:34:25.000Z\",\n        \"updatedAt\": \"2026-06-23T04:34:25.000Z\",\n        \"Product\": {\n          \"id\": 1,\n          \"name\": \"Paper-Clips\",\n          \"category\": \"tools\",\n          \"description\": \"Paper Clips\",\n          \"price\": \"3.00\",\n          \"stock\": 0,\n          \"image\": \"/uploads/products/1779956823024-259138890.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:03.000Z\",\n          \"updatedAt\": \"2026-06-23T04:34:25.000Z\"\n        }\n      },\n      {\n        \"id\": 32,\n        \"orderId\": 21,\n        \"productId\": 2,\n        \"quantity\": 2,\n        \"price\": \"8.00\",\n        \"createdAt\": \"2026-06-23T04:34:25.000Z\",\n        \"updatedAt\": \"2026-06-23T04:34:25.000Z\",\n        \"Product\": {\n          \"id\": 2,\n          \"name\": \"Registers\",\n          \"category\": \"NoteBook\",\n          \"description\": \"Notebooks\",\n          \"price\": \"8.00\",\n          \"stock\": 6,\n          \"image\": \"/uploads/products/1779956849044-884768461.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:29.000Z\",\n          \"updatedAt\": \"2026-06-23T04:56:35.000Z\"\n        }\n      },\n      {\n        \"id\": 33,\n        \"orderId\": 21,\n        \"productId\": 3,\n        \"quantity\": 1,\n        \"price\": \"4.00\",\n        \"createdAt\": \"2026-06-23T04:34:25.000Z\",\n        \"updatedAt\": \"2026-06-23T04:34:25.000Z\",\n        \"Product\": {\n          \"id\": 3,\n          \"name\": \"Color Pencils\",\n          \"category\": \"Pencils\",\n          \"description\": \"Color Pencils\",\n          \"price\": \"4.00\",\n          \"stock\": 1,\n          \"image\": \"/uploads/products/1779956877204-739906086.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:57.000Z\",\n          \"updatedAt\": \"2026-06-23T04:40:16.000Z\"\n        }\n      }\n    ]\n  },\n  {\n    \"id\": 20,\n    \"userId\": 4,\n    \"totalAmount\": 11,\n    \"status\": \"pending\",\n    \"createdAt\": \"2026-06-23T04:33:51.000Z\",\n    \"updatedAt\": \"2026-06-23T04:33:51.000Z\",\n    \"OrderItems\": [\n      {\n        \"id\": 29,\n        \"orderId\": 20,\n        \"productId\": 1,\n        \"quantity\": 1,\n        \"price\": \"3.00\",\n        \"createdAt\": \"2026-06-23T04:33:51.000Z\",\n        \"updatedAt\": \"2026-06-23T04:33:51.000Z\",\n        \"Product\": {\n          \"id\": 1,\n          \"name\": \"Paper-Clips\",\n          \"category\": \"tools\",\n          \"description\": \"Paper Clips\",\n          \"price\": \"3.00\",\n          \"stock\": 0,\n          \"image\": \"/uploads/products/1779956823024-259138890.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:03.000Z\",\n          \"updatedAt\": \"2026-06-23T04:34:25.000Z\"\n        }\n      },\n      {\n        \"id\": 30,\n        \"orderId\": 20,\n        \"productId\": 3,\n        \"quantity\": 2,\n        \"price\": \"4.00\",\n        \"createdAt\": \"2026-06-23T04:33:51.000Z\",\n        \"updatedAt\": \"2026-06-23T04:33:51.000Z\",\n        \"Product\": {\n          \"id\": 3,\n          \"name\": \"Color Pencils\",\n          \"category\": \"Pencils\",\n          \"description\": \"Color Pencils\",\n          \"price\": \"4.00\",\n          \"stock\": 1,\n          \"image\": \"/uploads/products/1779956877204-739906086.jpg\",\n          \"createdAt\": \"2026-05-28T08:27:57.000Z\",\n          \"updatedAt\": \"2026-06-23T04:40:16.000Z\"\n        }\n      }\n    ]\n  }\n]"
+}
+
+"show products"
+
+
+{
+    "success": true,
+    "reply": "[{\"id\":3,\"name\":\"Color Pencils\",\"category\":\"Pencils\",\"description\":\"Color Pencils\",\"price\":\"4.00\",\"stock\":1,\"image\":\"/uploads/products/1779956877204-739906086.jpg\",\"createdAt\":\"2026-05-28T08:27:57.000Z\",\"updatedAt\":\"2026-06-23T04:40:16.000Z\"},{\"id\":2,\"name\":\"Registers\",\"category\":\"NoteBook\",\"description\":\"Notebooks\",\"price\":\"8.00\",\"stock\":6,\"image\":\"/uploads/products/1779956849044-884768461.jpg\",\"createdAt\":\"2026-05-28T08:27:29.000Z\",\"updatedAt\":\"2026-06-23T04:56:35.000Z\"},{\"id\":1,\"name\":\"Paper-Clips\",\"category\":\"tools\",\"description\":\"Paper Clips\",\"price\":\"3.00\",\"stock\":0,\"image\":\"/uploads/products/1779956823024-259138890.jpg\",\"createdAt\":\"2026-05-28T08:27:03.000Z\",\"updatedAt\":\"2026-06-23T04:34:25.000Z\"}]"
+}
+
+"show categories"
+
+{
+    "success": true,
+    "reply": "[\"tools\",\"NoteBook\",\"Pencils\"]"
+}
+
+"show cart"
+
+{
+    "success": true,
+    "reply": "[\n  {\n    \"id\": 26,\n    \"cartId\": 2,\n    \"productId\": 3,\n    \"quantity\": 1,\n    \"createdAt\": \"2026-06-23T05:34:06.000Z\",\n    \"updatedAt\": \"2026-06-23T05:34:06.000Z\"\n  }\n]"
+}
+
+After JSON
+
+show cart
+
+{
+    "success": true,
+    "reply": {
+        "type": "getCart",
+        "message": "Here is your cart",
+        "data": {
+            "id": 2,
+            "userId": 4,
+            "createdAt": "2026-06-23T04:25:44.000Z",
+            "updatedAt": "2026-06-23T04:25:44.000Z",
+            "items": [
+                {
+                    "id": 28,
+                    "cartId": 2,
+                    "productId": 2,
+                    "quantity": 1,
+                    "createdAt": "2026-06-23T08:44:32.000Z",
+                    "updatedAt": "2026-06-23T08:44:32.000Z",
+                    "product": {
+                        "id": 2,
+                        "name": "Registers",
+                        "category": "NoteBook",
+                        "description": "Notebooks",
+                        "price": "8.00",
+                        "stock": 6,
+                        "image": "/uploads/products/1779956849044-884768461.jpg",
+                        "createdAt": "2026-05-28T08:27:29.000Z",
+                        "updatedAt": "2026-06-23T04:56:35.000Z"
+                    }
+                },
+                {
+                    "id": 27,
+                    "cartId": 2,
+                    "productId": 3,
+                    "quantity": 1,
+                    "createdAt": "2026-06-23T08:43:56.000Z",
+                    "updatedAt": "2026-06-23T08:43:56.000Z",
+                    "product": {
+                        "id": 3,
+                        "name": "Color Pencils",
+                        "category": "Pencils",
+                        "description": "Color Pencils",
+                        "price": "4.00",
+                        "stock": 1,
+                        "image": "/uploads/products/1779956877204-739906086.jpg",
+                        "createdAt": "2026-05-28T08:27:57.000Z",
+                        "updatedAt": "2026-06-23T04:40:16.000Z"
+                    }
+                }
+            ]
+        },
+        "meta": {
+            "empty": false
+        }
+    }
+}
+
+show orders
+
+{
+    "success": true,
+    "reply": {
+        "type": "getOrders",
+        "message": "Here are your recent orders",
+        "data": [
+            {
+                "id": 23,
+                "userId": 4,
+                "totalAmount": 8,
+                "status": "pending",
+                "createdAt": "2026-06-23T04:56:35.000Z",
+                "updatedAt": "2026-06-23T04:56:35.000Z",
+                "OrderItems": [
+                    {
+                        "id": 35,
+                        "orderId": 23,
+                        "productId": 2,
+                        "quantity": 1,
+                        "price": "8.00",
+                        "createdAt": "2026-06-23T04:56:35.000Z",
+                        "updatedAt": "2026-06-23T04:56:35.000Z",
+                        "Product": {
+                            "id": 2,
+                            "name": "Registers",
+                            "category": "NoteBook",
+                            "description": "Notebooks",
+                            "price": "8.00",
+                            "stock": 6,
+                            "image": "/uploads/products/1779956849044-884768461.jpg",
+                            "createdAt": "2026-05-28T08:27:29.000Z",
+                            "updatedAt": "2026-06-23T04:56:35.000Z"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 22,
+                "userId": 4,
+                "totalAmount": 4,
+                "status": "pending",
+                "createdAt": "2026-06-23T04:40:16.000Z",
+                "updatedAt": "2026-06-23T04:40:16.000Z",
+                "OrderItems": [
+                    {
+                        "id": 34,
+                        "orderId": 22,
+                        "productId": 3,
+                        "quantity": 1,
+                        "price": "4.00",
+                        "createdAt": "2026-06-23T04:40:16.000Z",
+                        "updatedAt": "2026-06-23T04:40:16.000Z",
+                        "Product": {
+                            "id": 3,
+                            "name": "Color Pencils",
+                            "category": "Pencils",
+                            "description": "Color Pencils",
+                            "price": "4.00",
+                            "stock": 1,
+                            "image": "/uploads/products/1779956877204-739906086.jpg",
+                            "createdAt": "2026-05-28T08:27:57.000Z",
+                            "updatedAt": "2026-06-23T04:40:16.000Z"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 21,
+                "userId": 4,
+                "totalAmount": 23,
+                "status": "pending",
+                "createdAt": "2026-06-23T04:34:25.000Z",
+                "updatedAt": "2026-06-23T04:34:25.000Z",
+                "OrderItems": [
+                    {
+                        "id": 31,
+                        "orderId": 21,
+                        "productId": 1,
+                        "quantity": 1,
+                        "price": "3.00",
+                        "createdAt": "2026-06-23T04:34:25.000Z",
+                        "updatedAt": "2026-06-23T04:34:25.000Z",
+                        "Product": {
+                            "id": 1,
+                            "name": "Paper-Clips",
+                            "category": "tools",
+                            "description": "Paper Clips",
+                            "price": "3.00",
+                            "stock": 0,
+                            "image": "/uploads/products/1779956823024-259138890.jpg",
+                            "createdAt": "2026-05-28T08:27:03.000Z",
+                            "updatedAt": "2026-06-23T04:34:25.000Z"
+                        }
+                    },
+                    {
+                        "id": 32,
+                        "orderId": 21,
+                        "productId": 2,
+                        "quantity": 2,
+                        "price": "8.00",
+                        "createdAt": "2026-06-23T04:34:25.000Z",
+                        "updatedAt": "2026-06-23T04:34:25.000Z",
+                        "Product": {
+                            "id": 2,
+                            "name": "Registers",
+                            "category": "NoteBook",
+                            "description": "Notebooks",
+                            "price": "8.00",
+                            "stock": 6,
+                            "image": "/uploads/products/1779956849044-884768461.jpg",
+                            "createdAt": "2026-05-28T08:27:29.000Z",
+                            "updatedAt": "2026-06-23T04:56:35.000Z"
+                        }
+                    },
+                    {
+                        "id": 33,
+                        "orderId": 21,
+                        "productId": 3,
+                        "quantity": 1,
+                        "price": "4.00",
+                        "createdAt": "2026-06-23T04:34:25.000Z",
+                        "updatedAt": "2026-06-23T04:34:25.000Z",
+                        "Product": {
+                            "id": 3,
+                            "name": "Color Pencils",
+                            "category": "Pencils",
+                            "description": "Color Pencils",
+                            "price": "4.00",
+                            "stock": 1,
+                            "image": "/uploads/products/1779956877204-739906086.jpg",
+                            "createdAt": "2026-05-28T08:27:57.000Z",
+                            "updatedAt": "2026-06-23T04:40:16.000Z"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 20,
+                "userId": 4,
+                "totalAmount": 11,
+                "status": "pending",
+                "createdAt": "2026-06-23T04:33:51.000Z",
+                "updatedAt": "2026-06-23T04:33:51.000Z",
+                "OrderItems": [
+                    {
+                        "id": 29,
+                        "orderId": 20,
+                        "productId": 1,
+                        "quantity": 1,
+                        "price": "3.00",
+                        "createdAt": "2026-06-23T04:33:51.000Z",
+                        "updatedAt": "2026-06-23T04:33:51.000Z",
+                        "Product": {
+                            "id": 1,
+                            "name": "Paper-Clips",
+                            "category": "tools",
+                            "description": "Paper Clips",
+                            "price": "3.00",
+                            "stock": 0,
+                            "image": "/uploads/products/1779956823024-259138890.jpg",
+                            "createdAt": "2026-05-28T08:27:03.000Z",
+                            "updatedAt": "2026-06-23T04:34:25.000Z"
+                        }
+                    },
+                    {
+                        "id": 30,
+                        "orderId": 20,
+                        "productId": 3,
+                        "quantity": 2,
+                        "price": "4.00",
+                        "createdAt": "2026-06-23T04:33:51.000Z",
+                        "updatedAt": "2026-06-23T04:33:51.000Z",
+                        "Product": {
+                            "id": 3,
+                            "name": "Color Pencils",
+                            "category": "Pencils",
+                            "description": "Color Pencils",
+                            "price": "4.00",
+                            "stock": 1,
+                            "image": "/uploads/products/1779956877204-739906086.jpg",
+                            "createdAt": "2026-05-28T08:27:57.000Z",
+                            "updatedAt": "2026-06-23T04:40:16.000Z"
+                        }
+                    }
+                ]
+            }
+        ],
+        "meta": {
+            "empty": false
+        }
+    }
+}

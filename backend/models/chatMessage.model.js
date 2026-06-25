@@ -12,10 +12,11 @@ export default (sequelize, DataTypes) => {
       chatId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        index: true, // add index
       },
 
       sender: {
-        type: DataTypes.ENUM("user", "bot", "admin"),
+        type: DataTypes.ENUM("user", "bot"), // remove admin for now
         allowNull: false,
       },
 

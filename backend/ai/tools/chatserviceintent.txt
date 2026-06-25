@@ -1,0 +1,539 @@
+content: `
+You are an ecommerce intent router.
+
+Available product categories:
+${categoriesText}
+
+IMPORTANT RULES:
+
+The store ONLY sells products from the categories above.
+
+If the user asks ANY general question about products, such as:
+- asking what is available
+- asking what they can buy
+- asking what products exist
+- asking to browse / see items
+- asking for product list
+- asking for shop inventory
+- asking what the store sells
+
+👉 ALWAYS use: getCategories
+
+DO NOT try to guess categories or invent new ones.
+
+If the user asks for a specific item or search → use searchProducts.
+
+If the user asks about cart → getCart.
+
+If the user asks about orders → getOrders.
+
+Return ONLY JSON:
+{
+  "tool": "searchProducts|getCart|getOrders|getCategories|null",
+  "args": {
+    "query": null,
+    "maxPrice": null,
+    "minPrice": null,
+    "category": null,
+    "sortBy": null,
+    "inStock": null,
+    "page": 1,
+    "limit": 10
+  }
+}
+`;
+
+
+
+import db from "../models/index.js";
+import { clod } from "./clod.client.js";
+import { searchProducts, getCategories } from "./tools/product.js";
+import { getCart } from "./tools/cart.js";
+import { getOrders } from "./tools/order.js";
+import AppError from "../utils/AppError.js";
+
+const { Chat, ChatMessage } = db;
+
+export const chatWithAI = async ({ message, userId }) => {
+  try {
+    // 1. CHAT
+    let chat = await Chat.findOne({ where: { userId, status: "active" } });
+
+    if (!chat) {
+      chat = await Chat.create({ userId, status: "active" });
+    }
+
+    await ChatMessage.create({
+      chatId: chat.id,
+      sender: "user",
+      message,
+    });
+
+    // 2. CATEGORIES
+    const categories = (await getCategories()).filter(Boolean);
+    const categoriesText = categories.join(", ");
+
+    // 3. ROUTER AI
+    const decision = await clod.post("/chat/completions", {
+      model: process.env.CLOD_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `
+You are an ecommerce intent router.
+
+Categories:
+${categoriesText}
+
+Return ONLY JSON:
+{
+  "tool": "searchProducts|getCart|getOrders|getCategories|null",
+  "args": {
+    "query": null,
+    "maxPrice": null,
+    "minPrice": null,
+    "category": null,
+    "sortBy": null,
+    "inStock": null,
+    "page": 1,
+    "limit": 10
+  }
+}
+
+IMPORTANT:
+- "show products" => query = ""
+- NEVER return text
+`,
+        },
+        { role: "user", content: message },
+      ],
+    });
+
+    const action = JSON.parse(decision.data.choices[0].message.content);
+
+    // 4. NORMALIZE ARGS
+    const args = {
+      query: "",
+      maxPrice: null,
+      minPrice: null,
+      category: null,
+      sortBy: null,
+      inStock: null,
+      page: 1,
+      limit: 10,
+      ...(action.args || {}),
+    };
+
+    // 5. BROWSE MODE FIX
+    const isBrowse =
+      action.tool === "searchProducts" &&
+      !args.query &&
+      !args.maxPrice &&
+      !args.minPrice &&
+      !args.category &&
+      args.inStock == null;
+
+    let toolResult;
+
+    switch (action.tool) {
+      case "searchProducts":
+        toolResult = await searchProducts({
+          ...args,
+          query: isBrowse ? "" : args.query,
+        });
+        break;
+
+      case "getCart":
+        toolResult = await getCart(userId);
+        break;
+
+      case "getOrders":
+        toolResult = await getOrders(userId);
+        break;
+
+      case "getCategories":
+        toolResult = await getCategories();
+        break;
+
+      default:
+        toolResult = null;
+    }
+
+    // 6. RESPONSE AI
+    const final = await clod.post("/chat/completions", {
+      model: process.env.CLOD_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `
+You are a shopping assistant.
+
+RULES:
+- Only use data
+- If empty → "No products found"
+- Products must be JSON array
+
+DATA:
+${JSON.stringify(toolResult)}
+`,
+        },
+        { role: "user", content: message },
+      ],
+    });
+
+    const aiReply = final.data.choices[0].message.content;
+
+    await ChatMessage.create({
+      chatId: chat.id,
+      sender: "bot",
+      message: aiReply,
+    });
+
+    return aiReply;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Failed to process AI chat request", 500);
+  }
+};
+
+export const getChatService = async ({ userId }) => {
+  try {
+    // 1. Find active chat
+    const chat = await Chat.findOne({
+      where: { userId, status: "active" },
+    });
+
+    if (!chat) {
+      return {
+        chatId: null,
+        status: "inactive",
+        messages: [],
+      };
+    }
+
+    // 2. Fetch messages
+    const messages = await ChatMessage.findAll({
+      where: { chatId: chat.id },
+      order: [["createdAt", "ASC"]],
+    });
+
+    // 3. Return structured response
+    return {
+      chatId: chat.id,
+      status: chat.status,
+      messages,
+    };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+
+    throw new AppError("Failed to fetch chat", 500);
+  }
+};
+
+
+
+
+
+
+import db from "../models/index.js";
+import { clod } from "./clod.client.js";
+import { searchProducts, getCategories } from "./tools/product.js";
+import { getCart } from "./tools/cart.js";
+import { getOrders } from "./tools/order.js";
+import {
+  sanitizeOrderFilters,
+  extractOrderFallback,
+} from "./tools/orderFilters.js";
+import {
+  sanitizeProductFilters,
+  extractProductFallback,
+} from "./tools/productFilter.js";
+import AppError from "../utils/AppError.js";
+
+const { Chat, ChatMessage } = db;
+
+export const chatWithAI = async ({ message, userId }) => {
+  try {
+    // 1. FIND OR CREATE CHAT
+    let chat = await Chat.findOne({
+      where: { userId, status: "active" },
+    });
+
+    if (!chat) {
+      chat = await Chat.create({ userId, status: "active" });
+    }
+
+    // SAVE USER MESSAGE
+    await ChatMessage.create({
+      chatId: chat.id,
+      sender: "user",
+      message,
+    });
+
+    // 2. GET CATEGORIES (for AI context)
+    const categories = (await getCategories()).filter(Boolean);
+    const categoriesText = categories.join(", ");
+
+    // 3. ROUTER AI (decides what to do)
+    let action;
+
+    try {
+      const decision = await clod.post("/chat/completions", {
+        model: process.env.CLOD_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: `
+You are an ecommerce intent router.
+
+Categories:
+${categoriesText}
+
+Return ONLY JSON:
+{
+  "tool": "searchProducts|getCart|getOrders|getCategories|null",
+  "args": {
+    "query": "",
+    "maxPrice": null,
+    "minPrice": null,
+    "category": null,
+    "sortBy": null,
+    "inStock": null,
+    "page": 1,
+    "limit": 10,
+
+    "status": null,
+    "productName": null,
+    "fromDate": null
+  }
+}
+
+RULES:
+- "show products" => query = ""
+- "cheapest" => sortBy = "price_low"
+- "expensive" => sortBy = "price_high"
+- "under X" => maxPrice = X
+- "above X" => minPrice = X
+- category must match exactly from list
+- "cancelled orders" => status = "cancelled"
+- "pending orders" => status = "pending"
+- "completed orders" => status = "delivered"
+- "orders with X" => productName = X
+- "orders above X" => minAmount = X
+- NEVER return text
+`,
+          },
+          { role: "user", content: message },
+        ],
+      });
+
+      action = JSON.parse(decision.data.choices[0].message.content);
+    } catch (err) {
+      // fallback if AI fails
+      action = { tool: null, args: {} };
+    }
+
+    // 5. EXECUTE TOOL
+    let toolResult = null;
+
+    switch (action.tool) {
+      case "searchProducts": {
+        const safeFilters = sanitizeProductFilters(action.args || {});
+        const fallbackFilters = extractProductFallback(message);
+
+        const finalFilters = {
+          ...fallbackFilters,
+          ...safeFilters,
+        };
+
+        toolResult = await searchProducts(finalFilters);
+        break;
+      }
+
+      case "getCart":
+        toolResult = await getCart(userId);
+        break;
+
+      case "getOrders": {
+        const safeFilters = sanitizeOrderFilters(action.args || {});
+        const fallbackFilters = extractOrderFallback(message);
+
+        const finalFilters = {
+          ...fallbackFilters,
+          ...safeFilters,
+        };
+
+        toolResult = await getOrders(userId, finalFilters);
+        break;
+      }
+
+      case "getCategories":
+        toolResult = await getCategories();
+        break;
+
+      default:
+        toolResult = null;
+    }
+
+    const normalizeToolResult = (tool, result) => {
+      switch (tool) {
+        case "searchProducts":
+          return result?.products ?? [];
+
+        case "getCart":
+          return result?.items ?? [];
+
+        case "getOrders":
+          return result ?? [];
+
+        case "getCategories":
+          return result ?? [];
+
+        default:
+          return result ?? [];
+      }
+    };
+
+    const isEmptyResult = (data) => {
+      return !data || data.length === 0;
+    };
+
+    const getEmptyMessage = (tool) => {
+      switch (tool) {
+        case "searchProducts":
+          return "No products found";
+        case "getCart":
+          return "Your cart is empty";
+        case "getOrders":
+          return "You have no orders yet";
+        case "getCategories":
+          return "No categories available";
+        default:
+          return "Nothing found";
+      }
+    };
+
+    // 6. BUILD FINAL RESPONSE (NO AI FOR DATA)
+    let response;
+
+    const data = normalizeToolResult(action.tool, toolResult);
+    const isEmpty = isEmptyResult(data);
+
+    if (
+      ["searchProducts", "getCart", "getOrders", "getCategories"].includes(
+        action.tool,
+      )
+    ) {
+      let message;
+
+      if (isEmpty) {
+        message = getEmptyMessage(action.tool);
+      } else {
+        message = getFriendlyMessage(action.tool);
+      }
+
+      response = {
+        type: action.tool,
+        message,
+        data,
+        meta: {
+          empty: isEmpty,
+        },
+      };
+    } else {
+      // fallback to AI chat
+      const final = await clod.post("/chat/completions", {
+        model: process.env.CLOD_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: `
+You are a helpful ecommerce assistant.
+Give short and helpful replies.
+`,
+          },
+          { role: "user", content: message },
+        ],
+      });
+
+      response = {
+        type: "text",
+        message: final.data.choices[0].message.content,
+      };
+    }
+
+    // 7. SAVE BOT RESPONSE
+    await ChatMessage.create({
+      chatId: chat.id,
+      sender: "bot",
+      message: JSON.stringify(response),
+    });
+
+    return response;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Failed to process AI chat request", 500);
+  }
+};
+
+// ✅ Friendly UI messages
+const getFriendlyMessage = (tool) => {
+  switch (tool) {
+    case "searchProducts":
+      return "Here are some products for you";
+    case "getCart":
+      return "Here is your cart";
+    case "getOrders":
+      return "Here are your recent orders";
+    case "getCategories":
+      return "Available categories";
+    default:
+      return "";
+  }
+};
+
+// ✅ FETCH CHAT
+export const getChatService = async ({ userId }) => {
+  try {
+    const chat = await Chat.findOne({
+      where: { userId, status: "active" },
+    });
+
+    if (!chat) {
+      return {
+        chatId: null,
+        status: "inactive",
+        messages: [],
+      };
+    }
+
+    const messages = await ChatMessage.findAll({
+      where: { chatId: chat.id },
+      order: [["createdAt", "ASC"]],
+    });
+
+    // parse bot messages
+    const formattedMessages = messages.map((msg) => {
+      if (msg.sender === "bot") {
+        try {
+          return {
+            ...msg.toJSON(),
+            message: JSON.parse(msg.message),
+          };
+        } catch {
+          return msg;
+        }
+      }
+      return msg;
+    });
+
+    return {
+      chatId: chat.id,
+      status: chat.status,
+      messages: formattedMessages,
+    };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Failed to fetch chat", 500);
+  }
+};

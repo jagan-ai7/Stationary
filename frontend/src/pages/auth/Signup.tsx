@@ -39,7 +39,8 @@ export default function SignupPage() {
           }}
           validationSchema={signupSchema}
           onSubmit={async (values) => {
-            const res = await dispatch(signup(values));
+            const { confirmPassword, ...rest } = values;
+            const res = await dispatch(signup(rest));
             if (signup.fulfilled.match(res)) {
               toast.success("Account created");
               nav("/", { replace: true });

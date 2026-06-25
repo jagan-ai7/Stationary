@@ -27,7 +27,10 @@ export const signupService = async (data) => {
     delete userResponse.password;
     return { user: userResponse, token };
   } catch (err) {
-    throw new AppError(err.message || "Failed to signup", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to signup", 500);
   }
 };
 
@@ -52,7 +55,10 @@ export const loginService = async (data) => {
     delete userResponse.password;
     return { user: userResponse, token };
   } catch (err) {
-    throw new AppError(err.message || "Failed to login", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to login", 500);
   }
 };
 
@@ -66,6 +72,9 @@ export const getUserByIdService = async (id) => {
     delete user.password;
     return user;
   } catch (err) {
-    throw new AppError(err.message || "Failed to get user", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to get user", 500);
   }
 };

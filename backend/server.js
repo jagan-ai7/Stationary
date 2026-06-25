@@ -12,7 +12,7 @@ import cartRoutes from "./routes/cart.route.js";
 import orderRoutes from "./routes/order.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import chatRoutes from "./routes/chat.route.js";
-import { initSocket } from "./socket/socket.js"; // ✅ IMPORT
+// import { initSocket } from "./socket/socket.js";
 import path from "path";
 
 dotenv.config();
@@ -46,7 +46,7 @@ const startServer = async () => {
     await seedAdmin();
 
     // ✅ Initialize socket
-    initSocket(server);
+    // initSocket(server);
 
     // ✅ Use server.listen NOT app.listen
     server.listen(port, () => {

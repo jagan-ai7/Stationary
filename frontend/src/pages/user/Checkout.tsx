@@ -55,10 +55,7 @@ export default function Checkout() {
           validationSchema={schema}
           onSubmit={async (values, { setSubmitting }) => {
             try {
-              const orderId = Date.now();
-
               const orderPayload = {
-                id: orderId,
                 userId: user?.id ?? 0,
                 userName: values.fullName,
                 date: new Date().toISOString(),
@@ -73,7 +70,8 @@ export default function Checkout() {
               };
 
               // ✅ API CALL (IMPORTANT)
-              await dispatch(createOrder(orderPayload)).unwrap();
+              const order = await dispatch(createOrder(orderPayload)).unwrap();
+              console.log("Order: ", order);
 
               // ✅ notifications (persisted to server)
               await dispatch(
@@ -81,7 +79,7 @@ export default function Checkout() {
                   audience: "user",
                   kind: "order_placed",
                   title: "Order placed",
-                  message: `Order #${orderId} was placed successfully.`,
+                  message: `Order #${order.id} was placed successfully.`,
                 }),
               ).unwrap();
 
@@ -90,7 +88,7 @@ export default function Checkout() {
                   audience: "admin",
                   kind: "new_order",
                   title: "New order",
-                  message: `Order #${orderId} from ${values.fullName}.`,
+                  message: `Order #${order.id} from ${values.fullName}.`,
                 }),
               ).unwrap();
 

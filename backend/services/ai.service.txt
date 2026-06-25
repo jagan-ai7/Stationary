@@ -69,3 +69,4 @@ export const getAIResponse = async ({ chatId, message }) => {
     return "Sorry, I'm having trouble right now. Please try again.";
   }
 };
+

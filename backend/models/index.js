@@ -76,6 +76,7 @@ db.Chat.hasMany(db.ChatMessage, {
 
 db.ChatMessage.belongsTo(db.Chat, {
   foreignKey: "chatId",
+  as: "chat", // add alias chat
 });
 
 // Export

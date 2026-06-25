@@ -13,6 +13,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
+    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -25,13 +26,26 @@ api.interceptors.response.use(
 
     if (status === 401) {
       localStorage.removeItem("token");
-      // ❌ don't toast this
+
+      // optional: redirect
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+
       return Promise.reject(error);
     }
 
     const msg = error?.response?.data?.message || error?.message || "Something went wrong";
 
-    const silent = error?.response?.data?.silent; // 👈 NEW
+    const silent = error?.response?.data?.silent;
+
+    if (!silent) {
+      if (status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else if (status >= 400) {
+        toast.error(msg);
+      }
+    }
 
     if (status === 500) {
       toast.error("Server error. Please try again later."); // ✅ generic

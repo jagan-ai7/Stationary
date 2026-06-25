@@ -1,0 +1,111 @@
+import api from "@/api/axios";
+
+/* ================= TYPES ================= */
+
+export interface ChatMessageDTO {
+  id: number;
+  sender: "user" | "bot" | "admin";
+  message: string;
+  createdAt?: string;
+}
+
+export interface ChatHistoryResponse {
+  id: number;
+  status: "active" | "closed";
+  messages: ChatMessageDTO[];
+}
+
+export interface SendMessageResponse {
+  userMessage: ChatMessageDTO;
+  botReply?: ChatMessageDTO;
+}
+
+/* ================= HELPERS ================= */
+
+// ✅ Always return array
+const normalizeMessages = (messages: any): ChatMessageDTO[] => {
+  if (!Array.isArray(messages)) return [];
+  return messages;
+};
+
+/* ================= USER CHAT ================= */
+
+// ✅ Fetch chat history (SAFE)
+export const getChatHistoryAPI = async (): Promise<ChatHistoryResponse> => {
+  const res = await api.get("/chat");
+
+  const data = res?.data?.data ?? {};
+
+  return {
+    id: data.id ?? 0,
+    status: data.status ?? "active",
+    messages: normalizeMessages(data.messages),
+  };
+};
+
+// ✅ Send message (SAFE)
+export const sendMessageAPI = async (message: string): Promise<SendMessageResponse> => {
+  const res = await api.post("/chat", { message });
+
+  const data = res?.data?.data ?? {};
+
+  return {
+    userMessage: data.userMessage ?? {
+      sender: "user",
+      message,
+    },
+    botReply: data.botReply ?? null,
+  };
+};
+
+/* ================= ADMIN CHAT ================= */
+
+export interface AdminChatDTO {
+  id: number;
+  userId: number;
+  status: "active" | "closed";
+  createdAt?: string;
+  updatedAt?: string;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
+  latestMessage: ChatMessageDTO | null;
+  messages: ChatMessageDTO[];
+}
+
+// ✅ Admin list
+export const getAdminChatsAPI = async (): Promise<AdminChatDTO[]> => {
+  const res = await api.get("/chat/admin");
+  return res?.data?.data ?? [];
+};
+
+// ✅ Single admin chat
+export const getAdminChatAPI = async (chatId: number): Promise<AdminChatDTO> => {
+  const res = await api.get(`/chat/admin/${chatId}`);
+  const data = res?.data?.data ?? {};
+
+  return {
+    ...data,
+    messages: normalizeMessages(data.messages),
+  };
+};
+
+// ✅ Admin send
+export const sendAdminMessageAPI = async (
+  chatId: number,
+  message: string,
+): Promise<ChatMessageDTO> => {
+  const res = await api.post(`/chat/admin/${chatId}/reply`, { message });
+  return res?.data?.data ?? { sender: "admin", message };
+};
+
+// ✅ Close chat
+export const closeAdminChatAPI = async (
+  chatId: number,
+): Promise<{ id: number; status: "closed" }> => {
+  const res = await api.patch(`/chat/admin/${chatId}/close`);
+  return res?.data?.data;
+};

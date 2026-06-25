@@ -56,10 +56,10 @@ export const getAllProductsService = async () => {
 
     return products.map(formatProduct);
   } catch (err) {
-    throw new AppError(
-      err.message || "Failed to fetch products",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to fetch products", 500);
   }
 };
 
@@ -72,10 +72,10 @@ export const getProductsByIdService = async (id) => {
 
     return formatProduct(product);
   } catch (err) {
-    throw new AppError(
-      err.message || "Failed to fetch product",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to fetch product", 500);
   }
 };
 
@@ -123,9 +123,9 @@ export const deleteProductService = async (id) => {
     await product.destroy();
     return id;
   } catch (err) {
-    throw new AppError(
-      err.message || "Failed to delete product",
-      err.statusCode || 500,
-    );
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to delete product", 500);
   }
 };

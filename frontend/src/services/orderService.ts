@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import { type Order } from "@/features/orders/orderSlice";
+import { type Order, CreateOrderPayload } from "@/features/orders/orderSlice";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -14,7 +14,7 @@ export const orderService = {
     return data.data; // ✅ FIXED
   },
 
-  async create(order: Order): Promise<Order> {
+  async create(order: CreateOrderPayload): Promise<Order> {
     const { data } = await api.post<ApiResponse<Order>>("/orders", order);
 
     return data.data; // ✅ FIXED

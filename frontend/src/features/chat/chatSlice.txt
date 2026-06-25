@@ -1,0 +1,142 @@
+// features/chat/chatSlice.ts
+
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { getChatHistoryAPI, sendMessageAPI, ChatMessageDTO } from "@/services/chatService";
+
+/* ================= TYPES ================= */
+
+export interface Message {
+  id?: number;
+  chatId?: number;
+  sender: "user" | "bot" | "admin";
+  message: string;
+  createdAt?: string;
+}
+
+interface ChatState {
+  messages: Message[];
+  loadingHistory: boolean;
+  sendingMessage: boolean;
+  error: string | null;
+  chatId?: number;
+  status?: "active" | "closed";
+}
+
+/* ================= INITIAL STATE ================= */
+
+const initialState: ChatState = {
+  messages: [], // ✅ NEVER undefined
+  loadingHistory: false,
+  sendingMessage: false,
+  error: null,
+  chatId: undefined,
+  status: "active",
+};
+
+/* ================= THUNKS ================= */
+
+// ✅ Fetch history
+export const fetchChatHistory = createAsyncThunk("chat/fetchHistory", async (_, thunkAPI) => {
+  try {
+    return await getChatHistoryAPI();
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(
+      err.response?.data?.message || err.message || "Failed to fetch chat",
+    );
+  }
+});
+
+// ✅ Send message
+export const sendMessage = createAsyncThunk(
+  "chat/sendMessage",
+  async (message: string, thunkAPI) => {
+    try {
+      return await sendMessageAPI(message);
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to send message",
+      );
+    }
+  },
+);
+
+/* ================= SLICE ================= */
+
+const chatSlice = createSlice({
+  name: "chat",
+  initialState,
+
+  reducers: {
+    // ✅ Optimistic message
+    addUserMessage: (state, action: PayloadAction<string>) => {
+      state.messages.push({
+        sender: "user",
+        message: action.payload,
+        createdAt: new Date().toISOString(),
+      });
+    },
+
+    // ✅ Optional: receive message (for socket later)
+    addIncomingMessage: (state, action: PayloadAction<Message>) => {
+      state.messages.push(action.payload);
+    },
+
+    // ✅ Reset
+    clearChat: (state) => {
+      state.messages = [];
+      state.chatId = undefined;
+      state.status = "active";
+      state.error = null;
+    },
+  },
+
+  extraReducers: (builder) => {
+    builder
+
+      /* ===== FETCH HISTORY ===== */
+      .addCase(fetchChatHistory.pending, (state) => {
+        state.loadingHistory = true;
+        state.error = null;
+      })
+
+      .addCase(fetchChatHistory.fulfilled, (state, action) => {
+        state.loadingHistory = false;
+
+        // ✅ ALWAYS SAFE
+        state.messages = action.payload.messages ?? [];
+        state.chatId = action.payload.id;
+        state.status = action.payload.status;
+      })
+
+      .addCase(fetchChatHistory.rejected, (state, action) => {
+        state.loadingHistory = false;
+        state.error = action.payload as string;
+      })
+
+      /* ===== SEND MESSAGE ===== */
+      .addCase(sendMessage.pending, (state) => {
+        state.sendingMessage = true;
+        state.error = null;
+      })
+
+      .addCase(sendMessage.fulfilled, (state, action) => {
+        state.sendingMessage = false;
+
+        // ✅ push bot reply safely
+        if (action.payload?.botReply) {
+          state.messages.push(action.payload.botReply);
+        }
+      })
+
+      .addCase(sendMessage.rejected, (state, action) => {
+        state.sendingMessage = false;
+        state.error = action.payload as string;
+      });
+  },
+});
+
+/* ================= EXPORTS ================= */
+
+export const { addUserMessage, addIncomingMessage, clearChat } = chatSlice.actions;
+
+export default chatSlice.reducer;

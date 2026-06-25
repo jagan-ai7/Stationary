@@ -11,6 +11,15 @@ export interface Order {
   items: { productId: number; name: string; qty: number; price: number }[];
 }
 
+export interface CreateOrderPayload {
+  userId: number;
+  userName: string;
+  date: string;
+  status: "pending";
+  total: number;
+  items: { productId: number; name: string; qty: number; price: number }[];
+}
+
 interface OrderState {
   items: Order[];
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -25,9 +34,12 @@ export const fetchOrders = createAsyncThunk("orders/fetch", async () => {
   return await orderService.getAll();
 });
 
-export const createOrder = createAsyncThunk("orders/create", async (order: Order) => {
-  return await orderService.create(order);
-});
+export const createOrder = createAsyncThunk<Order, CreateOrderPayload>(
+  "orders/create",
+  async (order) => {
+    return await orderService.create(order);
+  },
+);
 
 export const updateOrderStatusAsync = createAsyncThunk(
   "orders/updateStatusAsync",

@@ -51,7 +51,9 @@ export const getCartByUserIdService = async (userId) => {
       qty: item.quantity,
     }));
   } catch (err) {
-    console.error("Cart error:", err);
+    if (err instanceof AppError) {
+      throw err;
+    }
     throw new AppError("Failed to fetch cart", 500);
   }
 };
@@ -100,7 +102,10 @@ export const addToCartService = async (userId, productId, qty = 1) => {
       qty: cartItem.quantity,
     };
   } catch (err) {
-    throw new AppError(err.message || "Failed to add to cart", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to add to cart", 500);
   }
 };
 
@@ -141,7 +146,10 @@ export const updateCartItemService = async (userId, productId, qty) => {
 
     return { productId, qty };
   } catch (err) {
-    throw new AppError(err.message || "Failed to update cart", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to update cart", 500);
   }
 };
 
@@ -159,7 +167,10 @@ export const removeCartItemService = async (userId, productId) => {
 
     return productId;
   } catch (err) {
-    throw new AppError(err.message || "Failed to remove item", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to remove item", 500);
   }
 };
 
@@ -175,6 +186,9 @@ export const clearCartService = async (userId) => {
       where: { cartId: cart.id },
     });
   } catch (err) {
-    throw new AppError(err.message || "Failed to clear cart", 500);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to clear cart", 500);
   }
 };

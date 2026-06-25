@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import authService from "@/services/authService";
+import { toast } from "sonner";
 
 export interface AuthUser {
   id: number;
@@ -31,42 +32,25 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk<
   { token: string; user: AuthUser },
-  { email: string; password: string },
-  { rejectValue: string }
->("auth/login", async (payload, { rejectWithValue }) => {
-  try {
-    const res = await authService.login(payload);
-    localStorage.setItem("token", res.token);
-    return res;
-  } catch {
-    return rejectWithValue("Login failed");
-  }
+  { email: string; password: string }
+>("auth/login", async (payload) => {
+  const res = await authService.login(payload);
+  localStorage.setItem("token", res.token);
+  return res;
 });
 
 export const signup = createAsyncThunk<
   { token: string; user: AuthUser },
-  Omit<AuthUser, "id" | "role"> & { password: string },
-  { rejectValue: string }
->("auth/signup", async (form, { rejectWithValue }) => {
-  try {
-    const res = await authService.signup(form);
-    localStorage.setItem("token", res.token);
-    return res;
-  } catch {
-    return rejectWithValue("Signup failed");
-  }
+  Omit<AuthUser, "id" | "role"> & { password: string }
+>("auth/signup", async (form) => {
+  const res = await authService.signup(form);
+  localStorage.setItem("token", res.token);
+  return res;
 });
 
-export const fetchProfile = createAsyncThunk<AuthUser, void, { rejectValue: string }>(
-  "auth/fetchProfile",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await authService.fetchProfile();
-    } catch {
-      return rejectWithValue("Invalid token");
-    }
-  },
-);
+export const fetchProfile = createAsyncThunk<AuthUser, void>("auth/fetchProfile", async (_) => {
+  return await authService.fetchProfile();
+});
 
 const authSlice = createSlice({
   name: "auth",
@@ -95,7 +79,9 @@ const authSlice = createSlice({
     });
     b.addCase(login.rejected, (s, a) => {
       s.status = "failed";
-      s.error = a.payload ?? "Login failed";
+      s.error = a.error.message || "Login failed";
+
+      toast.error(s.error);
     });
     b.addCase(signup.pending, (s) => {
       s.status = "loading";
@@ -108,7 +94,12 @@ const authSlice = createSlice({
     });
     b.addCase(signup.rejected, (s, a) => {
       s.status = "failed";
-      s.error = a.payload ?? "Signup failed";
+      s.error = a.error.message || "Signup failed";
+
+      toast.error(s.error);
+    });
+    b.addCase(fetchProfile.pending, (s) => {
+      s.status = "loading";
     });
     b.addCase(fetchProfile.fulfilled, (s, a) => {
       s.user = a.payload;

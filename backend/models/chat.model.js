@@ -11,7 +11,8 @@ export default (sequelize, DataTypes) => {
 
       userId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // true because bot messages can be null
+        index: true, // add index
       },
 
       status: {
