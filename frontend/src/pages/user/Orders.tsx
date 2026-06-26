@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Badge } from "@/components/ui/badge";
-import { fetchOrders } from "@/features/orders/orderSlice";
+import { fetchOrdersById } from "@/features/orders/orderSlice";
 
 export default function Orders() {
   const user = useAppSelector((s) => s.auth.user);
@@ -21,7 +21,7 @@ export default function Orders() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchOrdersById());
   }, [dispatch]);
 
   return (

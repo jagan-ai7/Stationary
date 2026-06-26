@@ -1,9 +1,32 @@
 import api from "@/api/axios";
 
+export interface AIReply {
+  type: "searchProducts" | "getCart" | "getOrders" | "getCategories" | "text";
+  message: string;
+
+  data?: any[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+
+  filters?: Record<string, any>;
+
+  meta?: {
+    empty: boolean;
+  };
+
+  cart?: any; // only for cart
+}
+
 export interface ChatMessage {
   id?: number;
   sender: "user" | "bot";
-  message: string;
+  message: string | AIReply;
   createdAt?: string;
 }
 
@@ -14,7 +37,7 @@ export interface ChatResponse {
 }
 
 // 🔹 Send message to AI
-export const sendMessage = async (message: string) => {
+export const sendMessage = async (message: string): Promise<AIReply> => {
   const res = await api.post("/chat", { message });
   return res.data.reply;
 };

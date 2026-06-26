@@ -27,10 +27,17 @@ export const getCart = async (userId, filters = {}) => {
       }
     }
 
-    // 🔥 STEP 2: fetch filtered cart items
-    const items = await db.CartItem.findAll({
+    const page = filters.page || 1;
+    const limit = filters.limit || 5;
+    const offset = (page - 1) * limit;
+
+    // 🔥 STEP 2: fetch WITH count
+    const result = await db.CartItem.findAndCountAll({
       where,
-      limit: filters.limit || 10,
+      limit,
+      offset,
+      distinct: true,
+      col: "id",
       include: [
         {
           model: db.Product,
@@ -41,16 +48,29 @@ export const getCart = async (userId, filters = {}) => {
                 [Op.like]: `%${filters.productName}%`,
               },
             },
+            required: true,
           }),
         },
       ],
       order: [["createdAt", "DESC"]],
     });
 
-    // 🔥 STEP 3: return full cart with filtered items
+    // 🔥 PAGINATION CALC
+    const total = result.count;
+    const totalPages = Math.ceil(total / limit);
+
+    // 🔥 STEP 3: return structured response
     return {
-      ...cart.toJSON(),
-      items,
+      data: result.rows,
+      cart: cart.toJSON(),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
     };
   } catch (err) {
     console.error("GET CART ERROR:", err);

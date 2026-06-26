@@ -69,6 +69,7 @@ Return ONLY JSON:
     "page": 1,
     "limit": 5,
 
+    "orderId": null,
     "status": null,
     "productName": null,
     "fromDate": null
@@ -103,47 +104,89 @@ RULES:
       action = { tool: null, args: {} };
     }
 
+    const lastBotMessage = await ChatMessage.findOne({
+      where: { chatId: chat.id, sender: "bot" },
+      order: [["createdAt", "DESC"]],
+    });
+
+    let lastState = null;
+
+    if (lastBotMessage) {
+      try {
+        const parsed = JSON.parse(lastBotMessage.message);
+
+        if (parsed.type && parsed.pagination) {
+          lastState = parsed;
+        }
+      } catch {}
+    }
+
+    const isPrev = /\b(previous|back)\b/i.test(message);
+    const isNext = /\b(more|next|show more|load more)\b/i.test(message);
+
+    if ((isNext || isPrev) && lastState) {
+      action.tool = lastState.type;
+
+      const currentPage = lastState.pagination?.page || 1;
+
+      action.args = {
+        ...(lastState.filters || {}),
+        ...(action.args || {}), // AI overrides allowed
+        page: isNext ? currentPage + 1 : Math.max(1, currentPage - 1),
+        limit: lastState.pagination?.limit || 5,
+      };
+    }
+
     // 5. EXECUTE TOOL
     let toolResult = null;
+    let finalFilters = {};
+    let mergedFilters = {};
 
     switch (action.tool) {
       case "searchProducts": {
         const safeFilters = sanitizeProductFilters(action.args || {});
-        const fallbackFilters = extractProductFallback(message);
+        const fallbackFilters =
+          isNext || isPrev
+            ? {} // 🔥 DO NOT APPLY FALLBACK FOR PAGINATION
+            : extractProductFallback(message);
 
-        const finalFilters = {
+        mergedFilters = {
           ...fallbackFilters,
           ...safeFilters,
         };
+        finalFilters = mergedFilters;
 
-        toolResult = await searchProducts(finalFilters);
+        toolResult = await searchProducts(mergedFilters);
         break;
       }
 
       case "getCart": {
         const safeFilters = sanitizeCartFilters(action.args || {});
-        const fallbackFilters = extractCartFallback(message);
+        const fallbackFilters =
+          isNext || isPrev ? {} : extractCartFallback(message);
 
-        const finalFilters = {
+        mergedFilters = {
           ...fallbackFilters,
           ...safeFilters,
         };
+        finalFilters = mergedFilters;
 
-        toolResult = await getCart(userId, finalFilters);
+        toolResult = await getCart(userId, mergedFilters);
         break;
       }
 
       case "getOrders": {
         const safeFilters = sanitizeOrderFilters(action.args || {});
-        const fallbackFilters = extractOrderFallback(message);
+        const fallbackFilters =
+          isNext || isPrev ? {} : extractOrderFallback(message);
 
-        const finalFilters = {
+        mergedFilters = {
           ...fallbackFilters,
           ...safeFilters,
         };
+        finalFilters = mergedFilters;
 
-        toolResult = await getOrders(userId, finalFilters);
-        console.log("Action: ", action.args);
+        toolResult = await getOrders(userId, mergedFilters);
         break;
       }
 
@@ -158,22 +201,11 @@ RULES:
     const isEmptyResult = (tool, result) => {
       if (!result) return true;
 
-      switch (tool) {
-        case "searchProducts":
-          return !result.products || result.products.length === 0;
-
-        case "getCart":
-          return !result.items || result.items.length === 0;
-
-        case "getOrders":
-          return !result.length;
-
-        case "getCategories":
-          return !result.length;
-
-        default:
-          return false;
+      if (tool === "getCategories") {
+        return !result.length;
       }
+
+      return !result.data || result.data.length === 0;
     };
 
     const getEmptyMessage = (tool) => {
@@ -191,10 +223,16 @@ RULES:
       }
     };
 
+    const getToolData = (tool, result) => {
+      if (tool === "getCategories") return result;
+
+      return result.data || [];
+    };
+
     // 6. BUILD FINAL RESPONSE (NO AI FOR DATA)
     let response;
 
-    const isEmpty = isEmptyResult(action.tool, toolResult);
+    const isEmpty = isEmptyResult(action.tool, toolResult || {});
 
     if (
       ["searchProducts", "getCart", "getOrders", "getCategories"].includes(
@@ -206,10 +244,17 @@ RULES:
         message: isEmpty
           ? getEmptyMessage(action.tool)
           : getFriendlyMessage(action.tool),
-        data: toolResult || [],
+
+        data: getToolData(action.tool, toolResult),
+        pagination: toolResult?.pagination || null,
+        filters: finalFilters,
         meta: {
           empty: isEmpty,
         },
+
+        ...(action.tool === "getCart" && {
+          cart: toolResult.cart,
+        }),
       };
     } else {
       // fallback to AI chat
@@ -219,8 +264,28 @@ RULES:
           {
             role: "system",
             content: `
-You are a helpful ecommerce assistant.
-Give short and helpful replies.
+You are an AI assistant for a stationery ecommerce store.
+
+AVAILABLE CATEGORIES:
+${categoriesText}
+
+STRICT RULES:
+- You can ONLY use categories from the list above
+- DO NOT create new categories
+- DO NOT suggest anything outside these categories
+- If user asks for products, map their intent to ONE of the categories
+- If unclear, return "getCategories"
+- ONLY talk about products IF they are explicitly provided in system context- You can ONLY use categories from the list above
+- DO NOT create new categories
+- DO NOT suggest anything outside these categories
+- If user asks for products, map their intent to ONE of the categories
+- If unclear, return "getCategories"
+- DO NOT invent products
+- If user asks something unrelated, respond conversationally (like a human assistant)
+- If user asks about products but no data is available, say:
+  "I can show you available products if you tell me what you're looking for."
+
+- Keep replies short and natural
 `,
           },
           { role: "user", content: message },
@@ -232,6 +297,10 @@ Give short and helpful replies.
         message: final.data.choices[0].message.content,
       };
     }
+
+    console.log("Message: ", message);
+    console.log("isNext: ", isNext);
+    console.log("Last State: ", lastState);
 
     // 7. SAVE BOT RESPONSE
     await ChatMessage.create({
@@ -255,7 +324,7 @@ const getFriendlyMessage = (tool) => {
     case "getCart":
       return "Here is your cart";
     case "getOrders":
-      return "Here are your recent orders";
+      return "Here are your orders";
     case "getCategories":
       return "Available categories";
     default:

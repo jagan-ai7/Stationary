@@ -4,7 +4,7 @@ import orderService from "@/services/orderService";
 export interface Order {
   id: number;
   userId: number;
-  userName: string;
+  userName?: string;
   date: string;
   status: "pending" | "shipped" | "delivered" | "cancelled";
   total: number;
@@ -30,8 +30,12 @@ const initialState: OrderState = {
   status: "idle",
 };
 
-export const fetchOrders = createAsyncThunk("orders/fetch", async () => {
+export const fetchOrders = createAsyncThunk("orders/fetch/all", async () => {
   return await orderService.getAll();
+});
+
+export const fetchOrdersById = createAsyncThunk("orders/fetch", async () => {
+  return await orderService.getById();
 });
 
 export const createOrder = createAsyncThunk<Order, CreateOrderPayload>(
@@ -62,6 +66,16 @@ const orderSlice = createSlice({
         state.items = action.payload;
       })
       .addCase(fetchOrders.rejected, (state) => {
+        state.status = "failed";
+      })
+      .addCase(fetchOrdersById.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchOrdersById.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload;
+      })
+      .addCase(fetchOrdersById.rejected, (state) => {
         state.status = "failed";
       })
       .addCase(createOrder.fulfilled, (state, action) => {

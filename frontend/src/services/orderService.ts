@@ -9,6 +9,12 @@ interface ApiResponse<T> {
 
 export const orderService = {
   async getAll(): Promise<Order[]> {
+    const { data } = await api.get<ApiResponse<Order[]>>("/orders/all");
+
+    return data.data; // ✅ FIXED
+  },
+
+  async getById(): Promise<Order[]> {
     const { data } = await api.get<ApiResponse<Order[]>>("/orders");
 
     return data.data; // ✅ FIXED

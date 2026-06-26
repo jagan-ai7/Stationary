@@ -81,6 +81,41 @@ export const getAllOrderService = async () => {
 };
 
 /**
+ * GET ORDERS BY USERID
+ */
+
+export const getOrderByIdService = async (userId) => {
+  try {
+    const orders = await Order.findAll({
+      where: { userId },
+      include: [
+        {
+          model: OrderItem,
+          include: [
+            {
+              model: Product,
+              attributes: ["id", "name", "price", "image"],
+            },
+          ],
+        },
+        // {
+        //   model: User,
+        //   attributes: ["id", "firstName", "lastName"],
+        // },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return orders.map(formatOrder);
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError("Failed to fetch orders", 500);
+  }
+};
+
+/**
  * CREATE ORDER
  */
 export const createOrderService = async (userId, data) => {

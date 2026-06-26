@@ -15,6 +15,7 @@ interface ParsedMessage {
   type: "text" | "searchProducts" | "getCart" | "getOrders" | "getCategories";
   message?: string;
   data?: any;
+  pagination?: any;
   meta?: {
     empty?: boolean;
     suggestions?: string[];
@@ -38,17 +39,13 @@ interface Order {
   OrderItems: OrderItem[];
 }
 
-interface Cart {
-  id: number;
-  items: CartItem[];
-}
-
 interface CartItem {
   id: number;
   quantity: number;
   product: {
     id: number;
     name: string;
+    description: string;
     price: number;
   };
 }
@@ -67,8 +64,8 @@ const Chat = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    bottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -79,41 +76,71 @@ const Chat = () => {
   /* ================= SAFE PARSER ================= */
 
   const parseMessage = (message: unknown): ParsedMessage => {
-    try {
-      if (typeof message === "string") {
-        return JSON.parse(message);
+    if (typeof message === "string") {
+      try {
+        const parsed = JSON.parse(message);
+
+        if (typeof parsed === "object" && parsed !== null && "type" in parsed) {
+          return parsed as ParsedMessage;
+        }
+
+        return { type: "text", message };
+      } catch {
+        return { type: "text", message };
       }
-      return message as ParsedMessage;
-    } catch {
-      return { type: "text", message: String(message) };
     }
+
+    return message as ParsedMessage;
   };
 
   /* ================= VIEWS ================= */
 
   const ProductsView = ({ data }: { data: any }) => {
+    if (!Array.isArray(data)) {
+      return <div className="dark:bg-[#1D293D] dark:text-white">No products found</div>;
+    }
+
     return (
       <div className="space-y-2">
-        {data.products.map((p: any) => (
-          <div key={p.id} className="border p-3 rounded bg-white text-black">
+        {data.map((p: any) => (
+          <div
+            key={p.id}
+            className="border p-3 rounded bg-white dark:bg-[#1D293D] dark:text-white text-black"
+          >
             <div className="font-bold">{p.name}</div>
             <div className="text-sm">${p.price}</div>
             <div className="text-sm">{p.category}</div>
-            <div className="text-sm">Stock: {p.stock}</div>
+            <div className="text-sm">
+              <span className="font-bold">Stock: </span>
+              {p.stock}
+            </div>
           </div>
         ))}
       </div>
     );
   };
 
-  const CartView = ({ data }: { data: Cart }) => {
+  const CartView = ({ data }: { data: CartItem[] }) => {
+    if (!Array.isArray(data)) {
+      return <div className="dark:bg-[#1D293D] dark:text-white">No cart items</div>;
+    }
+
     return (
       <div className="space-y-2">
-        {data?.items?.map((item) => (
-          <div key={item.id} className="border p-2 rounded bg-white text-black">
-            <div>• Product: {item.product?.name}</div>
-            <div>• Quantity: {item.quantity}</div>
-            <div>• Total: ${item.product?.price * item.quantity}</div>
+        {data.map((item) => (
+          <div
+            key={item.id}
+            className="border p-3 rounded bg-whitedark:bg-[#1D293D] dark:text-white text-black"
+          >
+            <div className="font-bold">{item.product?.name}</div>
+            <div>{item.product?.description}</div>
+            <div>
+              <span className="font-bold">Quantity: </span>
+              {item.quantity}
+            </div>
+            <div>
+              <span className="font-bold">Total: </span>${item.product?.price * item.quantity}
+            </div>
           </div>
         ))}
       </div>
@@ -121,17 +148,31 @@ const Chat = () => {
   };
 
   const OrdersView = ({ data }: { data: Order[] }) => {
+    if (!Array.isArray(data)) {
+      return <div className="dark:bg-[#1D293D] dark:text-white">No orders found</div>;
+    }
+
     return (
-      <div className="space-y-3">
-        {data?.map((order) => (
-          <div key={order.id} className="border p-3 rounded bg-white text-black">
-            <div className="font-semibold">Order #{order.id}</div>
-            <div>Date: {new Date(order.createdAt).toLocaleString()}</div>
-            <div>Status: {order.status}</div>
+      <div className="space-y-2">
+        {data.map((order) => (
+          <div
+            key={order.id}
+            className="border p-3 rounded bg-white dark:bg-[#1D293D] text-black dark:text-white"
+          >
+            <div className="font-bold">Order #{order.id}</div>
+            <div>
+              <span className="font-bold">Date: </span>
+              {new Date(order.createdAt).toLocaleString()}
+            </div>
+            <div>
+              <span className="font-bold">Status: </span>
+              {order.status}
+            </div>
 
             <div className="mt-2 text-sm">
-              <div className="font-medium">Items:</div>
-
+              <div className="font-medium">
+                <span className="font-bold">Items: </span>
+              </div>
               {order.OrderItems?.map((item) => (
                 <div key={item.id} className="ml-2">
                   • {item.Product?.name} × {item.quantity}
@@ -139,7 +180,9 @@ const Chat = () => {
               ))}
             </div>
 
-            <div>Total: ${order.totalAmount}</div>
+            <div>
+              <span className="font-bold">Total: </span>${order.totalAmount}
+            </div>
           </div>
         ))}
       </div>
@@ -147,10 +190,14 @@ const Chat = () => {
   };
 
   const CategoriesView = ({ data }: { data: string[] }) => {
+    if (!Array.isArray(data)) {
+      return <div className="dark:bg-[#1D293D] dark:text-white">No categories</div>;
+    }
+
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2 flex-wrap">
         {data.map((cat, i) => (
-          <span key={i} className="bg-white px-2 py-1 rounded text-black border">
+          <span key={i} className="bg-gray-200 px-2 py-1 rounded text-sm">
             {cat}
           </span>
         ))}
@@ -158,30 +205,10 @@ const Chat = () => {
     );
   };
 
-  // const EmptyView = ({ message, suggestions }: { message?: string; suggestions?: string[] }) => (
-  //   <div>
-  //     <div>{message}</div>
-
-  //     {suggestions?.length ? (
-  //       <div className="mt-2 flex gap-2 flex-wrap">
-  //         {suggestions.map((s, i) => (
-  //           <button
-  //             key={i}
-  //             onClick={() => setInput(s)}
-  //             className="text-xs bg-gray-300 px-2 py-1 rounded"
-  //           >
-  //             {s}
-  //           </button>
-  //         ))}
-  //       </div>
-  //     ) : null}
-  //   </div>
-  // );
-
   /* ================= UI ================= */
 
   return (
-    <div className="flex flex-col h-full p-5">
+    <div className="flex flex-col flex-1 p-5 min-h-0">
       {/* ❌ FIXED ERROR RENDERING */}
       {error && <div className="text-red-500">{String(error)}</div>}
 
@@ -195,7 +222,9 @@ const Chat = () => {
             <div
               key={idx}
               className={`p-2 rounded w-fit max-w-[75%] ${
-                isBot ? "bg-gray-200 text-black" : "bg-blue-500 text-white ml-auto"
+                isBot
+                  ? "bg-gray-200 dark:bg-[#0F172B] text-black"
+                  : "bg-blue-500 text-white ml-auto"
               }`}
             >
               {/* USER */}
@@ -205,20 +234,36 @@ const Chat = () => {
 
               {isBot && (
                 <>
-                  {/* ✅ ALWAYS show message ONCE */}
-                  {parsed.message && <div className="mb-2">{parsed.message}</div>}
+                  {/* ✅ Message */}
+                  {parsed.message && (
+                    <div className="mb-2 dark:bg-[#1D293D] dark:text-white">{parsed.message}</div>
+                  )}
 
-                  {/* ✅ ONLY render data when NOT empty */}
+                  {/* ✅ Data */}
                   {!parsed.meta?.empty && parsed.type !== "text" && (
                     <>
                       {parsed.type === "searchProducts" && <ProductsView data={parsed.data} />}
-
                       {parsed.type === "getCart" && <CartView data={parsed.data} />}
-
                       {parsed.type === "getOrders" && <OrdersView data={parsed.data} />}
-
                       {parsed.type === "getCategories" && <CategoriesView data={parsed.data} />}
                     </>
+                  )}
+
+                  {/* ✅ Pagination Hints */}
+                  {parsed.pagination && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      {parsed.pagination.hasNext && (
+                        <div>
+                          👉 Type <b>next</b> to see more
+                        </div>
+                      )}
+
+                      {parsed.pagination.hasPrev && (
+                        <div>
+                          👉 Type <b>back</b> to go to previous
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               )}
@@ -231,7 +276,6 @@ const Chat = () => {
 
         <div ref={bottomRef} />
       </div>
-
       {/* 📝 Input */}
       <div className="flex gap-2 mt-2">
         <input
@@ -245,7 +289,7 @@ const Chat = () => {
 
         <button
           onClick={handleSend}
-          className="bg-black text-white px-4 py-2 rounded"
+          className="bg-black text-white px-4 py-2 rounded dark:bg-[#1D293D]"
           disabled={loading}
         >
           Send

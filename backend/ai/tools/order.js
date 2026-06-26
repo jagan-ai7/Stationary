@@ -5,6 +5,8 @@ export const getOrders = async (userId, filters = {}) => {
   try {
     const where = { userId };
 
+    if (filters.orderId) where.id = filters.orderId;
+
     if (filters.status) {
       where.status = filters.status;
     }
@@ -45,16 +47,30 @@ export const getOrders = async (userId, filters = {}) => {
       orderIds = [...new Set(items.map((i) => i.orderId))];
 
       if (orderIds.length === 0) {
-        return [];
+        return {
+          orders: [],
+          pagination: {
+            total: 0,
+            page: filters.page || 1,
+            limit: filters.limit || 5,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+        };
       }
 
       where.id = orderIds;
     }
 
-    // 🔥 STEP 2: fetch FULL orders
-    return await db.Order.findAll({
+    const page = filters.page || 1;
+    const limit = filters.limit || 5;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await db.Order.findAndCountAll({
       where,
-      limit: filters.limit || 5,
+      limit,
+      offset,
       order: [["createdAt", "DESC"]],
       include: [
         {
@@ -63,6 +79,20 @@ export const getOrders = async (userId, filters = {}) => {
         },
       ],
     });
+
+    const totalPages = Math.ceil(count / limit);
+
+    return {
+      data: rows,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   } catch (err) {
     console.error("GET ORDERS ERROR:", err);
     throw err;

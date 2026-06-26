@@ -2,11 +2,26 @@ import {
   getAllOrderService,
   createOrderService,
   updateOrderStatusService,
+  getOrderByIdService,
 } from "../services/order.service.js";
 
 export const getAllOrderController = async (req, res, next) => {
   try {
     const order = await getAllOrderService();
+    res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully",
+      data: order,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getOrderByIdController = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const order = await getOrderByIdService(userId);
     res.status(200).json({
       success: true,
       message: "Orders fetched successfully",

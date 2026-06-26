@@ -21,7 +21,7 @@ export const signupService = async (data) => {
     const token = generateToken({
       id: newUser.id,
       email: newUser.email,
-      rode: newUser.role,
+      role: newUser.role,
     });
     const userResponse = newUser.toJSON();
     delete userResponse.password;

@@ -9,13 +9,14 @@ export const createNotificationService = async (userId, data) => {
   try {
     const { audience, kind, title, message } = data;
 
+    // Either userId or audience must exist
     if (!userId && !audience) {
-      throw new AppError("userId or audience is required", 400);
+      throw new AppError("Either userId or audience is required.", 400);
     }
 
     const notification = await Notification.create({
-      userId: userId || null,
-      audience: audience || null,
+      userId: userId ?? null,
+      audience: audience ?? null,
       kind,
       title,
       message,
@@ -25,23 +26,28 @@ export const createNotificationService = async (userId, data) => {
     return notification;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    throw new AppError(
-      `Failed to create notification: ${err?.message || String(err)}`,
-      500,
-    );
+
+    throw new AppError(`Failed to create notification: ${err.message}`, 500);
   }
 };
 
 // ✅ GET ALL (with optional user info)
 export const getAllNotificationsService = async (userId, role) => {
   try {
+    let where = {};
+
+    if (role === "admin") {
+      where = {
+        [Op.or]: [{ userId }, { audience: "admin" }],
+      };
+    } else {
+      where = {
+        userId,
+      };
+    }
+
     const notifications = await Notification.findAll({
-      where: {
-        [Op.or]: [
-          { userId }, // personal notifications
-          { audience: role }, // broadcast to role
-        ],
-      },
+      where,
       include: [
         {
           model: User,
@@ -55,61 +61,76 @@ export const getAllNotificationsService = async (userId, role) => {
     return notifications;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    throw new AppError(
-      `Failed to fetch notifications: ${err?.message || String(err)}`,
-      500,
-    );
+
+    throw new AppError(`Failed to fetch notifications: ${err.message}`, 500);
   }
 };
 
 // ✅ MARK ONE AS READ
-export const markReadService = async (id, currentUserId) => {
+export const markReadService = async (id, currentUserId, role) => {
   try {
+    let where = {
+      id,
+    };
+
+    if (role === "admin") {
+      where[Op.or] = [{ userId: currentUserId }, { audience: "admin" }];
+    } else {
+      where.userId = currentUserId;
+    }
+
     const notification = await Notification.findOne({
-      where: {
-        id,
-        [Op.or]: [
-          { userId: currentUserId }, // own
-          { userId: null }, // broadcast
-        ],
-      },
+      where,
     });
 
     if (!notification) {
-      throw new AppError("Notification not found or not allowed", 404);
+      throw new AppError("Notification not found.", 404);
     }
 
     notification.read = true;
     await notification.save();
 
-    return notification.id;
+    return notification;
   } catch (err) {
     if (err instanceof AppError) throw err;
+
     throw new AppError(
-      `Failed to mark notification as read: ${err?.message || String(err)}`,
+      `Failed to mark notification as read: ${err.message}`,
       500,
     );
   }
 };
 
 // ✅ MARK ALL AS READ
-export const markAllReadService = async (currentUserId, role, audience) => {
+export const markAllReadService = async (currentUserId, role) => {
   try {
-    const where = {
-      [Op.or]: [{ userId: currentUserId }, { audience: role }],
-    };
+    let where = {};
 
-    if (audience) {
-      where.audience = audience;
+    if (role === "admin") {
+      where = {
+        [Op.or]: [{ userId: currentUserId }, { audience: "admin" }],
+      };
+    } else {
+      where = {
+        userId: currentUserId,
+      };
     }
 
-    await Notification.update({ read: true }, { where });
+    await Notification.update(
+      {
+        read: true,
+      },
+      {
+        where,
+      },
+    );
 
-    return audience || role;
+    return true;
   } catch (err) {
     if (err instanceof AppError) throw err;
+
     throw new AppError(
-      `Failed to mark notifications as read: ${err?.message || String(err)}`,
+      `Failed to mark all notifications as read: ${err.message}`,
       500,
     );
   }
@@ -121,20 +142,18 @@ export const deleteNotificationService = async (id, currentUserId) => {
     const deleted = await Notification.destroy({
       where: {
         id,
-        userId: currentUserId, // only own notifications
+        userId: currentUserId,
       },
     });
 
     if (!deleted) {
-      throw new AppError("Notification not found or not allowed", 404);
+      throw new AppError("Notification not found.", 404);
     }
 
     return true;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    throw new AppError(
-      `Failed to delete notification: ${err?.message || String(err)}`,
-      500,
-    );
+
+    throw new AppError(`Failed to delete notification: ${err.message}`, 500);
   }
 };

@@ -1,9 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import * as chatService from "@/services/chatService";
+import { AIReply, ChatResponse } from "@/services/chatService";
 
 export interface Message {
   sender: "user" | "bot";
-  message: string;
+  message: string | AIReply;
 }
 
 interface ChatState {
@@ -18,13 +19,16 @@ const initialState: ChatState = {
   error: null,
 };
 
-export const fetchChat = createAsyncThunk("chat/fetchChat", async () => {
+export const fetchChat = createAsyncThunk<ChatResponse>("chat/fetchChat", async () => {
   return await chatService.getChat();
 });
 
-export const sendChatMessage = createAsyncThunk("chat/sendMessage", async (message: string) => {
-  return await chatService.sendMessage(message);
-});
+export const sendChatMessage = createAsyncThunk<AIReply, string>(
+  "chat/sendMessage",
+  async (message) => {
+    return await chatService.sendMessage(message);
+  },
+);
 
 const chatSlice = createSlice({
   name: "chat",
@@ -44,7 +48,10 @@ const chatSlice = createSlice({
       })
 
       .addCase(fetchChat.fulfilled, (state, action) => {
-        state.messages = action.payload.messages || [];
+        state.messages = (action.payload.messages || []).map((msg: any) => ({
+          sender: msg.sender,
+          message: msg.message,
+        }));
         state.loading = false;
       })
 

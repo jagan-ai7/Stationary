@@ -8,6 +8,20 @@ export const sanitizeOrderFilters = (args = {}) => {
     filters.status = args.status.toLowerCase();
   }
 
+  if (args.orderId) {
+    const orderId = Number(args.orderId);
+    if (!isNaN(orderId)) {
+      filters.orderId = orderId;
+    }
+  }
+
+  if (args.page) {
+    const page = Number(args.page);
+    if (!isNaN(page) && page > 0) {
+      filters.page = page;
+    }
+  }
+
   // ✅ AMOUNT (min + max)
   if (args.minAmount) {
     const min = Number(args.minAmount);
@@ -57,6 +71,13 @@ export const extractOrderFallback = (message) => {
   else if (msg.includes("pending")) filters.status = "pending";
   else if (msg.includes("shipped")) filters.status = "shipped";
   else if (msg.includes("delivered")) filters.status = "delivered";
+
+  // ✅ ORDER ID
+  const orderIdMatch = msg.match(/order\s*(#|number)?\s*(\d+)/);
+
+  if (orderIdMatch) {
+    filters.orderId = Number(orderIdMatch[2]);
+  }
 
   // ✅ ABOVE / MIN
   const minMatch = msg.match(/(above|over|greater than)\s*(\d+)/);

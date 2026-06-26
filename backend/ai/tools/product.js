@@ -1,18 +1,24 @@
 import db from "../../models/index.js";
 import { Op } from "sequelize";
+
 export const searchProducts = async (filters = {}) => {
-  const {
+  let {
     query,
     minPrice,
     maxPrice,
     category,
     sortBy = "newest",
     inStock,
-    page = 1,
-    limit = 5,
+    page,
+    limit,
   } = filters;
 
+  // ✅ FIX: safe defaults
+  page = Number(page) || 1;
+  limit = Number(limit) || 5;
+
   const offset = (page - 1) * limit;
+
   const where = {};
 
   // 🔎 SEARCH
@@ -52,18 +58,26 @@ export const searchProducts = async (filters = {}) => {
 
   const order = orderMap[sortBy] ? [orderMap[sortBy]] : [["createdAt", "DESC"]];
 
-  const result = await db.Product.findAndCountAll({
+  const { count, rows } = await db.Product.findAndCountAll({
     where,
     order,
     limit,
     offset,
   });
 
+  // ✅ FIX: full pagination object
+  const totalPages = Math.ceil(count / limit);
+
   return {
-    total: result.count,
-    page,
-    limit,
-    products: result.rows.map((p) => p.dataValues),
+    data: rows,
+    pagination: {
+      total: count,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
   };
 };
 
