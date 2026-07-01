@@ -5,11 +5,10 @@ import AppError from "../utils/AppError.js";
 const { Notification, User } = db;
 
 // ✅ CREATE
-export const createNotificationService = async (userId, data) => {
+export const createNotificationService = async (data) => {
   try {
-    const { audience, kind, title, message } = data;
+    const { userId, audience, kind, title, message } = data;
 
-    // Either userId or audience must exist
     if (!userId && !audience) {
       throw new AppError("Either userId or audience is required.", 400);
     }
@@ -26,7 +25,6 @@ export const createNotificationService = async (userId, data) => {
     return notification;
   } catch (err) {
     if (err instanceof AppError) throw err;
-
     throw new AppError(`Failed to create notification: ${err.message}`, 500);
   }
 };
@@ -69,9 +67,7 @@ export const getAllNotificationsService = async (userId, role) => {
 // ✅ MARK ONE AS READ
 export const markReadService = async (id, currentUserId, role) => {
   try {
-    let where = {
-      id,
-    };
+    const where = { id };
 
     if (role === "admin") {
       where[Op.or] = [{ userId: currentUserId }, { audience: "admin" }];
@@ -79,16 +75,16 @@ export const markReadService = async (id, currentUserId, role) => {
       where.userId = currentUserId;
     }
 
-    const notification = await Notification.findOne({
-      where,
-    });
+    const notification = await Notification.findOne({ where });
 
     if (!notification) {
       throw new AppError("Notification not found.", 404);
     }
 
-    notification.read = true;
-    await notification.save();
+    if (!notification.read) {
+      notification.read = true;
+      await notification.save();
+    }
 
     return notification;
   } catch (err) {

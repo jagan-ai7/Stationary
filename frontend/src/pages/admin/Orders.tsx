@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Order } from "@/features/orders/orderSlice";
+import { pushNotificationAsync } from "@/features/notifications/notificationSlice";
 
 const statuses: Order["status"][] = ["pending", "shipped", "delivered", "cancelled"];
 
@@ -54,14 +55,46 @@ export default function AdminOrders() {
                   <td className="px-4 py-3">
                     <Select
                       value={o.status}
-                      onValueChange={(value) =>
-                        dispatch(
-                          updateOrderStatusAsync({
-                            id: o.id,
-                            status: value as Order["status"],
-                          }),
-                        )
-                      }
+                      onValueChange={async (value) => {
+                        try {
+                          const updatedOrder = await dispatch(
+                            updateOrderStatusAsync({
+                              id: o.id,
+                              status: value as Order["status"],
+                            }),
+                          ).unwrap();
+
+                          const kind =
+                            value === "shipped"
+                              ? "order_shipped"
+                              : value === "delivered"
+                                ? "order_delivered"
+                                : value === "cancelled"
+                                  ? "order_cancelled"
+                                  : "order_placed";
+
+                          await dispatch(
+                            pushNotificationAsync({
+                              audience: "user",
+                              userId: o.userId,
+                              kind,
+                              title: "Order status updated",
+                              message: `Your order #${updatedOrder.id} is now ${value}.`,
+                            }),
+                          ).unwrap();
+
+                          await dispatch(
+                            pushNotificationAsync({
+                              audience: "admin",
+                              kind,
+                              title: "Order updated",
+                              message: `Order #${updatedOrder.id} status changed to ${value}.`,
+                            }),
+                          ).unwrap();
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
                     >
                       <SelectTrigger className="w-36">
                         <SelectValue />

@@ -22,8 +22,7 @@ export const getNotificationsController = async (req, res, next) => {
 // ✅ POST /notifications
 export const createNotificationController = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const notification = await createNotificationService(userId, req.body);
+    const notification = await createNotificationService(req.body);
     res.status(201).json(notification);
   } catch (err) {
     next(err);
@@ -35,8 +34,9 @@ export const markReadController = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const id = Number(req.params.id);
+    const role = req.user.role;
 
-    const result = await markReadService(id, userId);
+    const result = await markReadService(id, userId, role);
 
     res.status(200).json(result);
   } catch (err) {

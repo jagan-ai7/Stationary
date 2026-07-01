@@ -18,13 +18,31 @@ import {
   Legend,
 } from "recharts";
 
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { fetchOrders } from "@/features/orders/orderSlice";
+import { useEffect } from "react";
+
+/* ---------------- HELPERS ---------------- */
+
+// safe date key (avoids timezone + time issues)
+const getDayKey = (dateStr: string) => new Date(dateStr).toISOString().split("T")[0];
+
+// ISO-like week grouping (simple stable version)
+const getWeekKey = (date: Date) => {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff = date.getTime() - start.getTime();
+  const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
+  return `Week ${week}`;
+};
+
+const getMonthKey = (dateStr: string) =>
+  new Date(dateStr).toLocaleString("default", { month: "short" });
 
 /* ---------------- CHART CARD ---------------- */
+
 function ChartCard({
   title,
   subtitle,
@@ -59,12 +77,20 @@ function ChartCard({
 }
 
 /* ---------------- MAIN COMPONENT ---------------- */
+
 export default function Analytics() {
   const orders = useAppSelector((s) => s.orders.items) || [];
 
   const [range, setRange] = React.useState<DateRange | undefined>();
 
-  /* ---------------- FILTER BY DATE RANGE ---------------- */
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  /* ---------------- FILTER HELPERS ---------------- */
+
   const inRange = React.useCallback(
     (dateStr: string) => {
       if (!range?.from && !range?.to) return true;
@@ -80,74 +106,80 @@ export default function Analytics() {
     [range],
   );
 
+  /* ---------------- FILTERED BASE DATA ---------------- */
+
   const deliveredOrders = React.useMemo(
     () => orders.filter((o) => o.status === "delivered"),
     [orders],
   );
 
+  const rangedDelivered = React.useMemo(
+    () => deliveredOrders.filter((o) => inRange(o.date)),
+    [deliveredOrders, inRange],
+  );
+
   /* ---------------- DAILY SALES ---------------- */
-  const filteredDaily = React.useMemo(() => {
+
+  const dailyData = React.useMemo(() => {
     const map = new Map<string, number>();
 
-    deliveredOrders
-      .filter((o) => inRange(o.date))
-      .forEach((o) => {
-        map.set(o.date, (map.get(o.date) || 0) + o.total);
-      });
+    rangedDelivered.forEach((o) => {
+      const day = getDayKey(o.date);
+      map.set(day, (map.get(day) || 0) + o.total);
+    });
 
-    return Array.from(map.entries()).map(([day, sales]) => ({
-      day,
-      sales,
-    }));
-  }, [deliveredOrders, inRange]);
+    return Array.from(map.entries())
+      .map(([day, sales]) => ({ day, sales }))
+      .sort((a, b) => new Date(a.day).getTime() - new Date(b.day).getTime());
+  }, [rangedDelivered]);
 
   /* ---------------- WEEKLY SALES ---------------- */
-  const filteredWeekly = React.useMemo(() => {
+
+  const weeklyData = React.useMemo(() => {
     const map = new Map<string, { thisYear: number; lastYear: number }>();
 
-    deliveredOrders
-      .filter((o) => inRange(o.date))
-      .forEach((o) => {
-        const d = new Date(o.date);
-        const week = `Week ${Math.ceil(d.getDate() / 7)}`;
-        const year = d.getFullYear();
-        const currentYear = new Date().getFullYear();
+    rangedDelivered.forEach((o) => {
+      const d = new Date(o.date);
+      const week = getWeekKey(d);
+      const year = d.getFullYear();
+      const currentYear = new Date().getFullYear();
 
-        const prev = map.get(week) || { thisYear: 0, lastYear: 0 };
+      const prev = map.get(week) || { thisYear: 0, lastYear: 0 };
 
-        if (year === currentYear) prev.thisYear += o.total;
-        else prev.lastYear += o.total;
+      if (year === currentYear) prev.thisYear += o.total;
+      else prev.lastYear += o.total;
 
-        map.set(week, prev);
-      });
+      map.set(week, prev);
+    });
 
-    return Array.from(map.entries()).map(([week, value]) => ({
-      week,
-      ...value,
-    }));
-  }, [deliveredOrders, inRange]);
+    return Array.from(map.entries())
+      .map(([week, value]) => ({
+        week,
+        ...value,
+      }))
+      .sort((a, b) => parseInt(a.week.split(" ")[1]) - parseInt(b.week.split(" ")[1]));
+  }, [rangedDelivered]);
 
   /* ---------------- MONTHLY SALES ---------------- */
-  const filteredMonthly = React.useMemo(() => {
+
+  const monthlyData = React.useMemo(() => {
     const map = new Map<string, number>();
 
-    deliveredOrders
-      .filter((o) => inRange(o.date))
-      .forEach((o) => {
-        const month = new Date(o.date).toLocaleString("default", {
-          month: "short",
-        });
+    rangedDelivered.forEach((o) => {
+      const month = getMonthKey(o.date);
+      map.set(month, (map.get(month) || 0) + o.total);
+    });
 
-        map.set(month, (map.get(month) || 0) + o.total);
-      });
-
-    return Array.from(map.entries()).map(([month, revenue]) => ({
-      month,
-      revenue,
-    }));
-  }, [deliveredOrders, inRange]);
+    return Array.from(map.entries())
+      .map(([month, revenue]) => ({ month, revenue }))
+      .sort(
+        (a, b) =>
+          new Date(`${a.month} 1, 2000`).getMonth() - new Date(`${b.month} 1, 2000`).getMonth(),
+      );
+  }, [rangedDelivered]);
 
   /* ---------------- LABEL ---------------- */
+
   const label = range?.from
     ? range.to
       ? `${format(range.from, "LLL d, y")} – ${format(range.to, "LLL d, y")}`
@@ -155,6 +187,7 @@ export default function Analytics() {
     : "Pick a date range";
 
   /* ---------------- UI ---------------- */
+
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -197,9 +230,9 @@ export default function Analytics() {
       <ChartCard
         title="Daily sales"
         subtitle="Delivered orders only"
-        isEmpty={filteredDaily.length === 0}
+        isEmpty={dailyData.length === 0}
       >
-        <LineChart data={filteredDaily}>
+        <LineChart data={dailyData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis />
@@ -212,9 +245,9 @@ export default function Analytics() {
       <ChartCard
         title="Weekly comparison"
         subtitle="This year vs last year"
-        isEmpty={filteredWeekly.length === 0}
+        isEmpty={weeklyData.length === 0}
       >
-        <BarChart data={filteredWeekly}>
+        <BarChart data={weeklyData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="week" />
           <YAxis />
@@ -226,12 +259,8 @@ export default function Analytics() {
       </ChartCard>
 
       {/* MONTHLY */}
-      <ChartCard
-        title="Monthly growth"
-        subtitle="Revenue trend"
-        isEmpty={filteredMonthly.length === 0}
-      >
-        <AreaChart data={filteredMonthly}>
+      <ChartCard title="Monthly growth" subtitle="Revenue trend" isEmpty={monthlyData.length === 0}>
+        <AreaChart data={monthlyData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />

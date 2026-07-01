@@ -19,14 +19,20 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  status: "idle" | "loading" | "succeeded" | "failed";
+
+  loginStatus: "idle" | "loading" | "succeeded" | "failed";
+  signupStatus: "idle" | "loading" | "succeeded" | "failed";
+  profileStatus: "idle" | "loading" | "succeeded" | "failed";
+
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   token: typeof localStorage !== "undefined" ? localStorage.getItem("token") : null,
-  status: "idle",
+  loginStatus: "idle",
+  signupStatus: "idle",
+  profileStatus: "idle",
   error: null,
 };
 
@@ -59,7 +65,9 @@ const authSlice = createSlice({
     logout(state) {
       state.user = null;
       state.token = null;
-      state.status = "idle";
+      state.loginStatus = "idle";
+      state.signupStatus = "idle";
+      state.profileStatus = "idle";
       state.error = null;
       localStorage.removeItem("token");
     },
@@ -69,44 +77,47 @@ const authSlice = createSlice({
   },
   extraReducers: (b) => {
     b.addCase(login.pending, (s) => {
-      s.status = "loading";
+      s.loginStatus = "loading";
       s.error = null;
     });
     b.addCase(login.fulfilled, (s, a) => {
-      s.status = "succeeded";
+      s.loginStatus = "succeeded";
       s.token = a.payload.token;
       s.user = a.payload.user;
     });
     b.addCase(login.rejected, (s, a) => {
-      s.status = "failed";
+      s.loginStatus = "failed";
       s.error = a.error.message || "Login failed";
 
       toast.error(s.error);
     });
     b.addCase(signup.pending, (s) => {
-      s.status = "loading";
+      s.signupStatus = "loading";
       s.error = null;
     });
     b.addCase(signup.fulfilled, (s, a) => {
-      s.status = "succeeded";
+      s.signupStatus = "succeeded";
       s.token = a.payload.token;
       s.user = a.payload.user;
     });
     b.addCase(signup.rejected, (s, a) => {
-      s.status = "failed";
+      s.signupStatus = "failed";
       s.error = a.error.message || "Signup failed";
 
       toast.error(s.error);
     });
     b.addCase(fetchProfile.pending, (s) => {
-      s.status = "loading";
+      s.profileStatus = "loading";
     });
     b.addCase(fetchProfile.fulfilled, (s, a) => {
       s.user = a.payload;
+      s.profileStatus = "succeeded";
+      s.error = null;
     });
     b.addCase(fetchProfile.rejected, (s) => {
       s.user = null;
       s.token = null;
+      s.profileStatus = "failed";
     });
   },
 });

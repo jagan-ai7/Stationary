@@ -89,6 +89,7 @@ RULES:
 - "cancelled orders" => status = "cancelled"
 - "pending orders" => status = "pending"
 - "completed orders" => status = "delivered"
+- "shipped orders" => status = "shipped"
 - "orders with X" => productName = X
 - "orders above X" => minAmount = X
 - NEVER return text
@@ -298,9 +299,9 @@ STRICT RULES:
       };
     }
 
-    console.log("Message: ", message);
-    console.log("isNext: ", isNext);
-    console.log("Last State: ", lastState);
+    // console.log("Message: ", message);
+    // console.log("isNext: ", isNext);
+    // console.log("Last State: ", lastState);
 
     // 7. SAVE BOT RESPONSE
     await ChatMessage.create({

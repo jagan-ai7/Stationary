@@ -15,7 +15,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
-      <Toaster richColors position="top-right" duration={1500} />
+      <Toaster richColors position="top-right" duration={1000} />
     </Provider>
   </React.StrictMode>,
 );

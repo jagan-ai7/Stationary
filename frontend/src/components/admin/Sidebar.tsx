@@ -1,5 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, MessageCircle } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Users,
+  BarChart3,
+  // MessageCircle,
+} from "lucide-react";
 
 const links = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -7,7 +14,7 @@ const links = [
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/chat", label: "Chat", icon: MessageCircle },
+  // { to: "/admin/chat", label: "Chat", icon: MessageCircle },
 ];
 
 export default function Sidebar() {

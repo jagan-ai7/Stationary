@@ -23,6 +23,7 @@ import {
 import { productSchema } from "@/utils/validation";
 import { type Product } from "@/features/products/productSlice";
 import { getImageUrl } from "@/utils/imageHelper";
+import { fetchNotifications } from "@/features/notifications/notificationSlice";
 
 /* ---------------- Image Picker ---------------- */
 
@@ -160,6 +161,7 @@ export default function AdminProducts() {
                         file: file ?? undefined,
                       }),
                     ).unwrap();
+                    await dispatch(fetchNotifications()); // 🔔 refresh notifications after edit
                     toast.success("Product updated");
                   } else {
                     await dispatch(
@@ -170,7 +172,6 @@ export default function AdminProducts() {
                     ).unwrap();
                     toast.success("Product created");
                   }
-
                   setOpen(false);
                 } catch (err) {
                   console.error(err);

@@ -23,6 +23,7 @@ export default (sequelize, DataTypes) => {
           "order_placed",
           "order_shipped",
           "order_delivered",
+          "order_cancelled",
           "offer",
           "low_stock",
           "out_of_stock",

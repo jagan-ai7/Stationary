@@ -1,5 +1,6 @@
 import AppError from "../utils/AppError.js";
 import db from "../models/index.js";
+import { checkStockAndNotify } from "../utils/checkStockAndNotify.js";
 
 const { Order, OrderItem, Product, User } = db;
 
@@ -146,6 +147,8 @@ export const createOrderService = async (userId, data) => {
 
       product.stock -= item.qty; // ✅ reduce stock
       await product.save({ transaction: t });
+
+      await checkStockAndNotify(product); // 🔔 notify if low stock
     }
 
     // 🔥 2. Create Order

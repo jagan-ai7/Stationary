@@ -1,5 +1,6 @@
 import AppError from "../utils/AppError.js";
 import db from "../models/index.js";
+import { checkStockAndNotify } from "../utils/checkStockAndNotify.js";
 
 const formatProduct = (product) => {
   if (!product) return product;
@@ -106,6 +107,8 @@ export const updateProductService = async (id, data, file) => {
       stock: stock ?? product.stock,
       image,
     });
+
+    await checkStockAndNotify(product); // 🔔 notify if low stock
 
     return formatProduct(product);
   } catch (err) {

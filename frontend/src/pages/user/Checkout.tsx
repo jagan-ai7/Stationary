@@ -71,7 +71,6 @@ export default function Checkout() {
 
               // ✅ API CALL (IMPORTANT)
               const order = await dispatch(createOrder(orderPayload)).unwrap();
-              console.log("Order: ", order);
 
               // ✅ notifications (persisted to server)
               await dispatch(

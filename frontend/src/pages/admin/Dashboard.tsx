@@ -3,6 +3,7 @@ import { Package, ShoppingBag, Users, DollarSign } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { fetchProducts } from "@/features/products/productSlice";
 import { fetchOrders } from "@/features/orders/orderSlice";
+import { getUsers } from "@/features/users/userSlice";
 
 function Stat({
   label,
@@ -29,11 +30,13 @@ function Stat({
 export default function AdminDashboard() {
   const products = useAppSelector((s) => s.products.items);
   const orders = useAppSelector((s) => s.orders.items);
+  const users = useAppSelector((s) => s.users.users);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchOrders());
+    dispatch(getUsers());
   }, [dispatch]);
 
   const revenue = useMemo(
@@ -45,6 +48,7 @@ export default function AdminDashboard() {
   );
   const lowStock = useMemo(() => products.filter((p) => p.stock > 0 && p.stock < 10), [products]);
   const outOfStock = useMemo(() => products.filter((p) => p.stock === 0), [products]);
+  const customers = useMemo(() => users.filter((u) => u.role === "user"), [users]);
 
   return (
     <div className="space-y-6">
@@ -53,7 +57,7 @@ export default function AdminDashboard() {
         <Stat label="Revenue" value={`$${revenue.toFixed(0)}`} Icon={DollarSign} />
         <Stat label="Orders" value={String(orders.length)} Icon={ShoppingBag} />
         <Stat label="Products" value={String(products.length)} Icon={Package} />
-        <Stat label="Customers" value="0" Icon={Users} />
+        <Stat label="Customers" value={String(customers.length)} Icon={Users} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-6">

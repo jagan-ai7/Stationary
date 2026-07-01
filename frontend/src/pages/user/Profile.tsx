@@ -9,8 +9,11 @@ import { toast } from "sonner";
 
 export default function Profile() {
   const user = useAppSelector((s) => s.auth.user);
+  console.log("User:", user?.role);
   const dispatch = useAppDispatch();
-  const status = useAppSelector((s) => s.auth.status);
+  const status = useAppSelector((s) => s.auth.profileStatus);
+
+  console.log("Status:", status);
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
@@ -64,11 +67,15 @@ export default function Profile() {
                 {field("state", "State")}
                 {field("city", "City")}
                 {field("zipCode", "Zip code")}
-                <div className="md:col-span-2">
-                  <Button type="submit" className="w-full" disabled={status === "loading"}>
-                    {status === "loading" ? "Updating profile…" : "Update Profile"}
-                  </Button>
-                </div>
+                {user?.role === "admin" ? (
+                  ""
+                ) : (
+                  <div className="md:col-span-2">
+                    <Button type="submit" className="w-full" disabled={status === "loading"}>
+                      {status === "loading" ? "Updating profile…" : "Update Profile"}
+                    </Button>
+                  </div>
+                )}
               </Form>
             );
           }}

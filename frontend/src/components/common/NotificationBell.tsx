@@ -40,7 +40,7 @@ export default function NotificationBell({ audience }: { audience: NotificationA
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
           {unread > 0 && (
@@ -58,7 +58,7 @@ export default function NotificationBell({ audience }: { audience: NotificationA
             No notifications
           </div>
         )}
-        {filtered.slice(0, 8).map((n) => (
+        {filtered.map((n) => (
           <DropdownMenuItem
             key={n.id}
             className="flex flex-col items-start gap-1 py-2"

@@ -7,6 +7,7 @@ export type NotificationKind =
   | "order_placed"
   | "order_shipped"
   | "order_delivered"
+  | "order_cancelled"
   | "offer"
   | "low_stock"
   | "out_of_stock"
@@ -14,6 +15,7 @@ export type NotificationKind =
 
 export interface Notification {
   id: number;
+  userId?: number;
   audience: NotificationAudience;
   kind: NotificationKind;
   title: string;
